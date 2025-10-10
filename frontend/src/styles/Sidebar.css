@@ -1,0 +1,73 @@
+.sb {
+  width: 84px;
+  min-width: 84px;
+  background: var(--blue);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px;
+  border-top-right-radius: 40px;
+  border-bottom-right-radius: 40px;
+}
+
+/* Avatar */
+.sb-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--accent);
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  margin-bottom: 35px; 
+  margin-top: 55px; 
+}
+
+/* Navegación lateral */
+.sb-nav,
+.sb-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* mantiene juntos los botones */
+}
+
+/* Separación adicional SOLO debajo del avatar */
+.sb-nav {
+  margin-top: 15px; /* aumenta el espacio entre el avatar y los íconos */
+}
+
+/* Botones sin fondo (solo ícono) */
+.sb-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 0.05s ease;
+}
+
+.sb-btn:hover svg {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.sb-btn svg {
+  width: 22px;
+  height: 22px;
+  color: #fff; /* íconos blancos sobre el fondo azul */
+}
+
+/* Ícono de tareas más grande */
+.sb-btn[title="Tareas"] svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Botón activo (solo cambia color de ícono, no fondo) */
+.sb-active svg {
+  color: var(--accent);
+}

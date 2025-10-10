@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+*{ box-sizing:border-box; }
+body, #root{ 
+  height:100vh; 
+  background: var(--white);
+}
+.layout{
+  display:grid;
+  grid-template-columns: 84px 360px 1fr; /* sidebar / lista / chat */
+  height:100vh;
+  font-family:"Poppins", system-ui, sans-serif;
+  color:var(--text);
+}
+.list-col{
+  background:#fff;
+  padding:18px 16px;
+  overflow:auto;
+}
+.chat-col{
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  background: #f5f5f5;
+}
+
+.layout-mobile{ height:100vh; background:var(--bg); }

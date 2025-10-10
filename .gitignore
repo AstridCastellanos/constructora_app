@@ -1,0 +1,28 @@
+# === Node ===
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# === Environment files ===
+.env
+backend/.env
+frontend/.env
+
+# === Build outputs ===
+dist/
+build/
+coverage/
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Logs ===
+*.log
+
+# === IDE/editor settings ===
+.vscode/
+.idea/
+
+# === Misc ===
+*.local

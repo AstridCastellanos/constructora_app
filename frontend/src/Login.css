@@ -1,0 +1,176 @@
+* {
+  box-sizing: border-box;
+}
+
+/* Contenedor general dividido en dos columnas */
+.login-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  position: relative; 
+  overflow: hidden;
+}
+
+/* Columna izquierda (formulario) */
+.login-left {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  z-index: 2; 
+  transition: all 0.3s ease;
+}
+
+/* Caja del formulario */
+.login-card {
+  width: 70%;
+  max-width: 400px;
+  text-align: center;    
+}
+
+/* Logo circular */
+.login-logo {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: none;
+}
+
+/* Título */
+.login-card h2 {
+  margin-bottom: 100px;
+  margin-top: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Inputs */
+.form-group {
+  margin-bottom: 20px;
+}
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-bottom: 1.2px solid #71819f;
+  outline: none;
+  font-size: 14px;
+  background: none;
+  color: #71819f;
+}
+.form-group input::placeholder {
+  color: #71819f;
+  opacity: 1;
+}
+.form-group input:focus {
+  border-bottom: 1.2px solid #94b6c4; 
+}
+
+/* Botón */
+button {
+  width: 100%;
+  padding: 12px;
+  background: #94b6c4;
+  border: none;
+  border-radius: 25px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button:hover {
+  background: #6c97a7;
+}
+
+/* Columna derecha (imagen) */
+.login-right {
+  flex: 1;
+  background: url("./assets/FondoEdificios.png") no-repeat center center;
+  background-size: cover;
+  z-index: 1;
+}
+
+/* Contenedor de la contraseña con ícono */
+.password-group {
+  position: relative;
+}
+
+/* Ícono mostrar/ocultar */
+.password-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #71819f;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 8px;
+  transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+  color: #94b6c4;
+}
+
+/* Ajuste para que el ícono no tape el texto */
+.password-group input {
+  padding-right: 35px;
+}
+
+/* --- Versión de escritorio --- */
+@media (min-width: 992px) {
+  .login-container {
+    display: block;
+  }
+
+  .login-left {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    border-top-right-radius: 80px;
+    border-bottom-right-radius: 80px;
+  }
+
+  .login-right {
+    position: absolute;
+    top: 0;
+    left: 35%; 
+    width: 65%;
+    height: 100%;
+    background: url("./assets/FondoEdificios.png") no-repeat center center;
+    background-size: cover;
+  }
+}
+
+/* Versión móvil */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+  .login-left {
+    flex: none;
+    height: 100%;
+    background: url("./assets/FondoEdificios.png") no-repeat center center;
+    background-size: cover;
+  }
+  .login-card {
+    width: 80%;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+  }
+  .login-card h2 {
+    margin-bottom: 50px;
+    margin-top: none;
+  }
+  .login-logo {
+    width: 110px;
+    height: 110px;
+  }
+}

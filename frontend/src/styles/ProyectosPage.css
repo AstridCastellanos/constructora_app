@@ -1,0 +1,118 @@
+
+/* CONTENEDOR PRINCIPAL */
+.layout {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100%;
+  background: #fff;
+}
+
+/* SECCIÓN DE PROYECTOS */
+.proyectos-col {
+  flex: 1;
+  background: #fff;
+  padding: 24px;
+  overflow-y: auto;
+  font-family: "Poppins", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.p-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 8px solid #f5f5f5;
+}
+
+.p-header h2 {
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.p-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f5f5;
+  border-radius: 999px;
+  padding: 10px 12px;
+  border: none;
+}
+
+.p-search svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+}
+
+.p-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+
+.p-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.p-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 14px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.p-table td {
+  padding: 12px;
+  font-size: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.p-codigo {
+  font-weight: 700;
+}
+
+.estado {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-weight: 500;
+  font-size: 13px;
+  color: white;
+  display: inline-block;
+  min-width: 90px;
+  text-align: center;
+}
+
+/* En Curso */
+.estado--enproceso {
+  background-color: #a2d5a2; /* Verde suave */
+}
+
+/* Finalizado */
+.estado--finalizado {
+  background-color: #90b4d8; /* Azul */
+}
+
+/* Pausado */
+.estado--pausado {
+  background-color: #ccc; /* Gris claro */
+}
+
+/* Cancelado */
+.estado--cancelado {
+  background-color: #a5a2a2; /* Gris oscuro, tu color solicitado */
+}
