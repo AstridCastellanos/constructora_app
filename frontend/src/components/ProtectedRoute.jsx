@@ -1,27 +1,39 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function ProtectedRoute({ children, allowedRoles }) {
-  const { usuario, rol, token } = useContext(AuthContext);
+  const { usuario, roles, token } = useContext(AuthContext);
 
   // Si no hay datos cargados aún, verifica el localStorage
   const tokenGuardado = token || localStorage.getItem("token");
-  const usuarioGuardado =
-    usuario || JSON.parse(localStorage.getItem("usuario") || "null");
-  const rolGuardado = rol || localStorage.getItem("rol");
 
-  if (!usuarioGuardado && !tokenGuardado) {
-    return <Navigate to="/login" replace />;
-    console.log("ProtectedRoute:", { usuarioGuardado, tokenGuardado });
+  let rolesGuardados = roles || [];
 
+  if (rolesGuardados.length === 0) {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("rol") || "[]");
+      rolesGuardados = Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      rolesGuardados = [];
+    }
   }
 
-  // 🔹 Validar roles si se requiere
-  if (allowedRoles && !allowedRoles.includes(rolGuardado)) {
+  if (!usuario && !tokenGuardado) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 🔹 Validar roles
+  if (allowedRoles && !allowedRoles.some(r => rolesGuardados.includes(r))) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // ✅ Autenticado y con permisos
+  // 🔹 Bloquear clientes desde PC
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  if (rolesGuardados.includes("cliente") && !isMobile) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // ✅ Autenticado y autorizado
   return children;
 }

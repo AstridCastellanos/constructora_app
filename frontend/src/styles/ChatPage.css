@@ -5,7 +5,8 @@ body, #root{
   height:100vh; 
   background: var(--white);
 }
-.layout{
+
+.chat-layout{
   display:grid;
   grid-template-columns: 84px 360px 1fr; /* sidebar / lista / chat */
   height:100vh;

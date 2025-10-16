@@ -12,7 +12,7 @@ export default function ChatPage() {
 
   if (!isMobile) {
     return (
-      <div className="layout">
+      <div className="chat-layout">
         <Sidebar />
         <section className="list-col">
           <ChatList onSelect={setSelectedProject} selected={selectedProject} />
