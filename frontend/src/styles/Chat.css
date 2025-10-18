@@ -13,7 +13,7 @@
 
 body {
   font-family: "DM Sans", sans-serif;
-  background: var(--bg-light);
+  background: var(--white);
 }
 
 .list-col {

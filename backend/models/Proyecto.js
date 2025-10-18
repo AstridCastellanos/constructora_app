@@ -46,12 +46,6 @@ const proyectoSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  fecha_proxima_reunion: {
-    type: Date,
-  },
-  proposito_reunion: {
-    type: String,
-  },
   estado: {
     type: String,
     enum: ["En Curso", "Finalizado", "Pausado", "Cancelado"],

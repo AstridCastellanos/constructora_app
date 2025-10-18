@@ -80,9 +80,12 @@ export default function Login() {
                 type="text"
                 placeholder="Usuario"
                 value={usuario}
-                onChange={(e) =>
-                  onlyLettersAndUnderscore(e.target.value) && setUsuario(e.target.value)
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || onlyLettersAndUnderscore(value)) {
+                    setUsuario(value);
+                  }
+                }}
               />
             </div>
 
@@ -91,9 +94,12 @@ export default function Login() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Contraseña"
                 value={password}
-                onChange={(e) =>
-                  lettersNumbersAndSigns(e.target.value) && setPassword(e.target.value)
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || lettersNumbersAndSigns(value)) {
+                    setPassword(value);
+                  }
+                }}
               />
               <span
                 className="password-toggle"
@@ -103,7 +109,7 @@ export default function Login() {
               </span>
             </div>
 
-            <button type="submit" disabled={cargando}>
+            <button type="submit" disabled={cargando} className="login-bt">
               {cargando ? "Ingresando..." : "Ingresar"}
             </button>
           </form>

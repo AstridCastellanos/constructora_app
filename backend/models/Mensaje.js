@@ -1,19 +1,45 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const archivoSchema = new mongoose.Schema({
+  public_id: { type: String, required: true }, // ✅ ahora obligatorio, Cloudinary siempre lo devuelve
   url: { type: String, required: true },
-  tipo: { type: String, enum: ["imagen", "pdf", "docx"], required: true },
+  tipo: {
+    type: String,
+    enum: ["imagen", "pdf", "docx", "otros"], // ✅ más flexible
+    default: "otros",
+  },
   nombre: { type: String },
-  tamaño: { type: Number }
+  tamaño: { type: Number },
 });
 
 const mensajeSchema = new mongoose.Schema({
-  id_proyecto: { type: mongoose.Schema.Types.ObjectId, ref: "Proyecto", required: true },
-  autor_id: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
-  contenido: { type: String, required: true },
-  fecha_envio: { type: Date, default: Date.now },
-  archivos: [archivoSchema]
+  id_proyecto: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Proyecto",
+    required: true,
+  },
+  autor_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Usuario",
+    required: true,
+  },
+  contenido: {
+    type: String,
+    default: "",
+  },
+  fecha_envio: {
+    type: Date,
+    default: Date.now,
+  },
+  archivos: [archivoSchema],
 });
 
-const Mensaje = mongoose.model("Mensaje", mensajeSchema);
-export default Mensaje;
+// 🚨 Validación: impedir mensajes totalmente vacíos
+mensajeSchema.pre("validate", function (next) {
+  if (!this.contenido?.trim() && (!this.archivos || this.archivos.length === 0)) {
+    return next(new Error("El mensaje no puede estar vacío"));
+  }
+  next();
+});
+
+module.exports = mongoose.model("Mensaje", mensajeSchema);

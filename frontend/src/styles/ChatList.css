@@ -4,6 +4,7 @@
   flex-direction: column;
   gap: 12px;
   background: var(--white);
+  padding: 0px 10px;
 }
 
 .cl-title {
@@ -20,7 +21,7 @@
   gap: 8px;
   background: #f5f5f5;
   border-radius: 999px;
-  padding: 10px 12px;
+  padding: 5px 12px;
   border: none;
 }
 

@@ -8,6 +8,7 @@ const proyectoRoutes = require("./routes/proyectoRoutes");
 const mensajeRoutes = require("./routes/mensajeRoutes");
 const notificacionRoutes = require("./routes/notificacionRoutes");
 const cambioProyectoRoutes = require("./routes/cambioProyectoRoutes");
+const uploadRoutes = require("./routes/uploadRoutes");
 
 
 const app = express();
@@ -29,6 +30,8 @@ app.use("/api/proyectos", proyectoRoutes);
 app.use("/api/mensajes", mensajeRoutes);
 app.use("/api/notificaciones", notificacionRoutes);
 app.use("/api/cambios", cambioProyectoRoutes);
+app.use("/api/archivos", uploadRoutes);
+
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
