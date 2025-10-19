@@ -13,13 +13,32 @@ export const crearMensaje = async (req, res) => {
       archivos,
     });
 
-    await nuevoMensaje.save();
-    res.json(nuevoMensaje);
+    // Guardar mensaje
+    const mensajeGuardado = await nuevoMensaje.save();
+
+    // 🔹 Volver a cargarlo con populate (para que tenga autor y proyecto completos)
+    const mensajeConDatos = await Mensaje.findById(mensajeGuardado._id)
+      .populate("autor_id")
+      .populate("id_proyecto");
+
+    // ✅ Emitir mensaje en tiempo real con Socket.IO
+    const io = req.app.get("io");
+    if (io) {
+      console.log("📡 Emitiendo mensaje en tiempo real:", mensajeConDatos._id);
+      io.emit("mensaje-actualizado", mensajeConDatos);
+    } else {
+      console.warn("⚠️ No se encontró instancia de Socket.IO");
+    }
+
+    res.json(mensajeConDatos);
   } catch (error) {
     console.error("Error al crear mensaje:", error);
-    res.status(500).json({ mensaje: "Error al crear mensaje", detalle: error.message });
+    res
+      .status(500)
+      .json({ mensaje: "Error al crear mensaje", detalle: error.message });
   }
 };
+
 
 // Obtener mensajes por proyecto (con URLs firmadas)
 export const obtenerMensajesPorProyecto = async (req, res) => {

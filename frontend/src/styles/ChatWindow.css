@@ -147,6 +147,7 @@
 .cw-field {
   display: flex;
   align-items: center;
+  justify-items: center;
   background: none;
   border: none;
   border-radius: 999px;
@@ -294,3 +295,45 @@
   opacity: 1;
   transform: scale(1.05);
 }
+
+.cw-scroll-down {
+  position: absolute;
+  right: 20px;
+  bottom: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: black;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, color 0.3s ease;
+}
+
+.cw-scroll-down:hover {
+  transform: scale(1.1);
+}
+
+/* Estado cuando hay un nuevo mensaje y el usuario no está abajo */
+.cw-scroll-down.has-new {
+  background: var(--blue);
+  color: white;
+  animation: pulseNew 1.5s ease-in-out infinite;
+}
+
+/* Pequeño efecto de pulso para llamar la atención */
+@keyframes pulseNew {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+

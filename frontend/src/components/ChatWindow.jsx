@@ -1,14 +1,64 @@
-import React, { useEffect, useState } from "react";
-import { Send, Paperclip, ArrowLeft, Download } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { Send, Paperclip, ArrowLeft, Download, ChevronDown } from "lucide-react";
 import "../styles/ChatWindow.css";
+import { io } from "socket.io-client";
+
 
 export default function ChatWindow({ project, onBack }) {
   const [mensajes, setMensajes] = useState([]);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
 
-  // Usuario logueado (obtenido del localStorage)
+  const messagesEndRef = useRef(null);
+  const chatBodyRef = useRef(null);
+  const socket = useRef(null);
+
+  // 🟦 Usuario logueado (debe ir antes de los efectos que lo usan)
   const usuarioActual = JSON.parse(localStorage.getItem("usuario")) || {};
+
+  // conexión WebSocket
+  useEffect(() => {
+    socket.current = io("http://localhost:4000");
+    return () => socket.current.disconnect();
+  }, []);
+
+  // escuchar mensajes del proyecto actual
+  useEffect(() => {
+    if (!socket.current) return;
+
+    const handler = (msg) => {
+      if (msg.id_proyecto === project._id || msg.id_proyecto?._id === project._id) {
+        setMensajes((prev) => [...prev, msg]);
+
+        const esPropio =
+          msg.autor_id?._id === usuarioActual._id ||
+          msg.autor_id?.usuario_sistema === usuarioActual.usuario_sistema;
+
+        if (isAtBottom || esPropio) {
+          scrollToBottom();
+        } else {
+          setHasNewMessage(true);
+        }
+      }
+    };
+
+    socket.current.on("mensaje-actualizado", handler);
+    return () => socket.current.off("mensaje-actualizado", handler);
+  }, [project, isAtBottom, usuarioActual]);
+
+  // Función para bajar al final del chat
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Solo bajar automáticamente si el usuario está al fondo o si el mensaje nuevo es propio
+  useEffect(() => {
+    if (isAtBottom) {
+      scrollToBottom();
+    }
+  }, [mensajes, isAtBottom]);
 
   // Cargar mensajes reales del proyecto
   useEffect(() => {
@@ -56,7 +106,7 @@ export default function ChatWindow({ project, onBack }) {
 
         archivosSubidos.push({
           url: data.url,
-          public_id: data.public_id, 
+          public_id: data.public_id,
           nombre: data.nombre,
           tipo: tipoArchivo,
           tamaño: data.tamaño,
@@ -80,12 +130,22 @@ export default function ChatWindow({ project, onBack }) {
       const nuevo = await resMensaje.json();
 
       // Actualizar vista sin recargar
-      setMensajes((prev) => [...prev, nuevo]);
+      socket.current?.emit("nuevo-mensaje", nuevo);
       setMessage("");
       setFile(null);
     } catch (err) {
       console.error("Error al enviar mensaje:", err);
     }
+  };
+
+  // Detectar si el usuario está viendo los mensajes antiguos
+  const handleScroll = () => {
+    const el = chatBodyRef.current;
+    if (!el) return;
+
+    // Si está a menos de 100px del fondo, lo consideramos "abajo"
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    setIsAtBottom(atBottom);
   };
 
   return (
@@ -99,7 +159,7 @@ export default function ChatWindow({ project, onBack }) {
         <div className="cw-title">{project?.nombre}</div>
       </header>
 
-      <main className="cw-body">
+      <main className="cw-body" ref={chatBodyRef} onScroll={handleScroll}>
         {mensajes.length > 0 ? (
           mensajes.map((m) => {
             const esPropio =
@@ -158,10 +218,17 @@ export default function ChatWindow({ project, onBack }) {
                         );
                       }
 
-
                       // Si es PDF o DOCX, mostrar acciones de ver y descargar
                       return (
-                        <div key={i} className="b-file-icon" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div
+                          key={i}
+                          className="b-file-icon"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
                           <a
                             href={`http://localhost:4000/api/mensajes/archivo/${file.public_id}`}
                             target="_blank"
@@ -185,7 +252,6 @@ export default function ChatWindow({ project, onBack }) {
                           </a>
                         </div>
                       );
-
                     })}
                   </div>
                 )}
@@ -199,7 +265,22 @@ export default function ChatWindow({ project, onBack }) {
         ) : (
           <p className="cw-empty">No hay mensajes para este proyecto.</p>
         )}
+        <div ref={messagesEndRef} />
       </main>
+
+      {/* Botón flotante para bajar al último mensaje */}
+      {!isAtBottom && (
+        <button
+          className={`cw-scroll-down ${hasNewMessage ? "has-new" : ""}`}
+          onClick={() => {
+            scrollToBottom();
+            setHasNewMessage(false);
+          }}
+          title="Bajar al último mensaje"
+        >
+          <ChevronDown size={22} />
+        </button>
+      )}
 
       <form className="cw-input" onSubmit={send}>
         <div className="cw-field">
