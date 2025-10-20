@@ -13,6 +13,6 @@ export const lettersNumbersAndSigns = (value) => /^[A-Za-z0-9.,\-_]+$/.test(valu
 // Solo letras sin acento y guion medio (sin espacios)
 export const onlyLettersAndUnderscore = (value) => /^[A-Za-z_]+$/.test(value);
 
-// ✅ Solo letras (con acentos), números y guiones medios
+// Solo letras (con acentos), números y guiones medios
 export const lettersNumbersAndHyphen = (value) =>
   /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9-\s]+$/.test(value); 

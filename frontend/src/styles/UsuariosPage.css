@@ -1,0 +1,100 @@
+.usuarios-col {
+  flex: 1;
+  padding: 24px;
+  background: white;
+}
+
+.u-header h2 {
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 20px;
+}
+
+.usuarios-form {
+  display: flex;
+  gap: 50px;
+  margin-top: 20px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex: 1;
+}
+
+.u-label {
+  font-size: 15px;
+}
+
+input, select {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+}
+
+.search-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input input {
+  flex: 1;
+  padding-right: 30px;
+}
+
+.search-input button {
+  position: absolute;
+  right: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+}
+
+.search-input button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-group {
+  display: flex;
+  justify-content: center;
+  margin-top: 200px;
+  gap: 20px;
+}
+
+.btn-guardar {
+  background: var(--blue);
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-limpiar {
+  background: var(--blue);
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-eliminar {
+  background: #e63946;
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.msg {
+  text-align: center;
+  margin-top: 15px;
+  font-weight: bold;
+}

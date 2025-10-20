@@ -29,7 +29,7 @@ mongoose
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // ⚠️ En producción pon tu dominio real
+    origin: "*", // ⚠️ En producción poner el dominio real
     methods: ["GET", "POST"],
   },
 });
@@ -52,7 +52,6 @@ io.on("connection", (socket) => {
 
   // Reenviar a todos los clientes los mensajes nuevos enviados vía socket
   socket.on("nuevo-mensaje", (msg) => {
-    console.log("📨 Mensaje recibido desde cliente vía socket:", msg);
     io.emit("mensaje-actualizado", msg);
   });
 

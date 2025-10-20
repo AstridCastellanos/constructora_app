@@ -1,7 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./Login";
 import ProyectosPage from "./pages/ProyectosPage";
-import ChatPage from "./pages/ChatPage"; // 👈 agrega esto
+import ChatPage from "./pages/ChatPage";
+import UsuariosPage from "./pages/UsuariosPage"; 
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./styles/Chat.css";
 
@@ -11,27 +12,37 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
 
-        {/* ✅ Ruta protegida para proyectos */}
+        {/* Ruta protegida para proyectos */}
         <Route
           path="/proyectos"
           element={
-            <ProtectedRoute allowedRoles={["admin", "titular", "colaborador"]}>
+            <ProtectedRoute allowedRoles={["administrador", "titular", "colaborador"]}>
               <ProyectosPage />
             </ProtectedRoute>
           }
         />
 
-        {/* ✅ Ruta protegida para chat */}
+        {/* Ruta protegida para chat */}
         <Route
           path="/chat"
           element={
-            <ProtectedRoute allowedRoles={["admin", "titular", "colaborador", "cliente"]}>
+            <ProtectedRoute allowedRoles={["administrador", "titular", "colaborador", "cliente"]}>
               <ChatPage />
             </ProtectedRoute>
           }
         />
 
-        {/* Si intentan acceder a una ruta no existente */}
+        {/* Nueva ruta protegida para configuración */}
+        <Route
+          path="/usuarios"
+          element={
+            <ProtectedRoute allowedRoles={["administrador", "titular"]}>
+              <UsuariosPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ruta por defecto */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

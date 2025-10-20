@@ -1,15 +1,20 @@
 import React, { useState, useContext } from "react";
-import { Folder, MessageSquare, CheckSquare, Settings, LogOut } from "lucide-react";
+import {
+  Folder,
+  MessageSquare,
+  CheckSquare,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Toast from "./Toast";
 import "../styles/Sidebar.css";
 import { AuthContext } from "../context/AuthContext";
 
-
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useContext(AuthContext); 
+  const { logout, usuario } = useContext(AuthContext); // debe tener usuario.roles
 
   const [toast, setToast] = useState(null);
 
@@ -17,43 +22,69 @@ export default function Sidebar() {
     logout();
     setToast({ msg: "Sesión cerrada correctamente 👋", type: "success" });
 
-    // Espera a que el mensaje se muestre antes de redirigir
     setTimeout(() => {
-    setToast(null); // cierra el toast antes de navegar
-    navigate("/login", { replace: true });
-    }, 2500); // 2.5 segundos de visibilidad total
-
+      setToast(null);
+      navigate("/login", { replace: true });
+    }, 2500);
   };
 
+  // ===============================
+  // 🔐 Control de visibilidad por rol
+  // ===============================
+  const roles = usuario?.roles || [];
+
+  const puedeVer = (vista) => {
+    if (roles.includes("titular")) return true;
+    if (vista === "proyectos" && roles.includes("colaborador")) return true;
+    if (vista === "chat" && (roles.includes("colaborador") || roles.includes("cliente"))) return true;
+    if (vista === "ajustes" && roles.includes("administrador")) return true;
+    return false;
+  };
 
   return (
     <aside className="sb">
       <div className="sb-avatar">PS</div>
 
       <nav className="sb-nav">
-        <button
-          className={`sb-btn ${location.pathname === "/proyectos" ? "sb-active" : ""}`}
-          title="Proyectos"
-          onClick={() => navigate("/proyectos")}
-        >
-          <Folder />
-        </button>
+        {puedeVer("proyectos") && (
+          <button
+            className={`sb-btn ${location.pathname === "/proyectos" ? "sb-active" : ""}`}
+            title="Proyectos"
+            onClick={() => navigate("/proyectos")}
+          >
+            <Folder />
+          </button>
+        )}
 
-        <button
-          className={`sb-btn ${location.pathname === "/chat" ? "sb-active" : ""}`}
-          title="Chat"
-          onClick={() => navigate("/chat")}
-        >
-          <MessageSquare />
-        </button>
+        {puedeVer("chat") && (
+          <button
+            className={`sb-btn ${location.pathname === "/chat" ? "sb-active" : ""}`}
+            title="Chat"
+            onClick={() => navigate("/chat")}
+          >
+            <MessageSquare />
+          </button>
+        )}
 
-        <button className="sb-btn" title="Tareas">
-          <CheckSquare />
-        </button>
+        {puedeVer("tareas") && (
+          <button
+            className={`sb-btn ${location.pathname === "/tareas" ? "sb-active" : ""}`}
+            title="Tareas"
+            onClick={() => navigate("/tareas")}
+          >
+            <CheckSquare />
+          </button>
+        )}
 
-        <button className="sb-btn" title="Ajustes">
-          <Settings />
-        </button>
+        {puedeVer("ajustes") && (
+          <button
+            className={`sb-btn ${location.pathname === "/usuarios" ? "sb-active" : ""}`}
+            title="Configuración"
+            onClick={() => navigate("/usuarios")}
+          >
+            <Settings />
+          </button>
+        )}
       </nav>
 
       <div className="sb-bottom">
@@ -61,6 +92,8 @@ export default function Sidebar() {
           <LogOut />
         </button>
       </div>
+
+      {toast && <Toast msg={toast.msg} type={toast.type} />}
     </aside>
   );
 }

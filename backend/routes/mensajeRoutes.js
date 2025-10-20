@@ -4,7 +4,7 @@ const Mensaje = require("../models/Mensaje");
 const cloudinary = require("../config/cloudinary.js").default;
 const axios = require("axios");
 
-// 📨 Crear un nuevo mensaje
+// Crear un nuevo mensaje
 router.post("/", async (req, res) => {
   try {
     const nuevoMensaje = new Mensaje(req.body);
@@ -20,7 +20,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 📋 Obtener todos los mensajes
+// Obtener todos los mensajes
 router.get("/", async (req, res) => {
   try {
     const mensajes = await Mensaje.find()
@@ -51,7 +51,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 💬 Obtener mensajes de un proyecto específico
+// Obtener mensajes de un proyecto específico
 router.get("/proyecto/:id_proyecto", async (req, res) => {
   try {
     const { id_proyecto } = req.params;
@@ -114,7 +114,7 @@ router.get(/^\/archivo\/(.+)$/, async (req, res) => {
     const fileUrl = cloudinary.url(public_id, {
       resource_type: resourceType,
       type: "upload",
-      sign_url: false, // ⚙️ ya no es necesario si Cloudinary permite entrega pública
+      sign_url: false, 
     });
 
     const response = await axios.get(fileUrl, { responseType: "arraybuffer" });

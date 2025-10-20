@@ -16,7 +16,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
-  const [toast, setToast] = useState(null); // 👈 nuevo estado para los toasts
+  const [toast, setToast] = useState(null);
   const [cargando, setCargando] = useState(false);
 
   const showToast = (msg, type = "info") => {
@@ -36,32 +36,43 @@ export default function Login() {
 
       const data = await res.json();
 
+      // Validación por código de estado
       if (!res.ok) {
-        showToast(data.mensaje || "Usuario o contraseña incorrectos", "error");
-      } else {
-        const rolesUsuario = data.usuario.roles || [];
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-
-        // Guardar sesión
-        login(data.usuario, rolesUsuario, data.token);
-
-        // Redirigir según rol y dispositivo
-        if (rolesUsuario.includes("cliente")) {
-          if (isMobile) {
-            showToast("Bienvenido al chat 👋", "success");
-            setTimeout(() => navigate("/chat", { replace: true }), 800);
-          } else {
-            showToast("Los clientes solo pueden ingresar desde móviles", "warning");
-          }
+        if (res.status === 403) {
+          showToast("Tu cuenta está inactiva. Contacta al administrador.", "warning");
+        } else if (res.status === 401) {
+          showToast("Contraseña incorrecta.", "error");
+        } else if (res.status === 404) {
+          showToast("Usuario no encontrado.", "error");
+        } else if (res.status === 400) {
+          showToast("Debe ingresar usuario y contraseña.", "warning");
         } else {
-          showToast("Inicio de sesión exitoso ✅", "success");
-          setTimeout(() => {
-            navigate(isMobile ? "/chat" : "/proyectos", { replace: true });
-          }, 800);
+          showToast(data.mensaje || "Error al iniciar sesión.", "error");
         }
+        return; // Detiene la ejecución si hubo error
       }
+
+      // Si la respuesta es correcta (200)
+      const rolesUsuario = data.usuario.roles || [];
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+
+      // Guardar sesión
+      login(data.usuario, rolesUsuario, data.token);
+
+      // Redirigir según rol y dispositivo
+      if (rolesUsuario.includes("cliente")) {
+        if (isMobile) {
+          navigate("/chat", { replace: true });
+        } else {
+          showToast("Los clientes solo pueden ingresar desde dispositivos móviles.", "warning");
+        }
+      } else {
+        navigate(isMobile ? "/chat" : "/proyectos", { replace: true });
+      }
+
     } catch (error) {
-      showToast("Error de conexión con el servidor", "error");
+      console.error("Error en login:", error);
+      showToast("Error de conexión con el servidor.", "error");
     } finally {
       setCargando(false);
     }
@@ -118,7 +129,7 @@ export default function Login() {
 
       <div className="login-right"></div>
 
-      {/* 🔹 Toast visible si hay mensaje */}
+      {/* Toast visible si hay mensaje */}
       {toast && (
         <Toast
           message={toast.msg}
