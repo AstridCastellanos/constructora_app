@@ -6,7 +6,7 @@ export default function ChatList({ onSelect, selected }) {
   const [proyectos, setProyectos] = useState([]);
   const [filtro, setFiltro] = useState("");
 
-  // ✅ Cargar proyectos reales desde el backend
+  // Cargar proyectos reales desde el backend
   useEffect(() => {
     const token = localStorage.getItem("token");
     fetch("http://localhost:4000/api/proyectos", {
@@ -17,7 +17,7 @@ export default function ChatList({ onSelect, selected }) {
       .catch((err) => console.error("Error al obtener proyectos:", err));
   }, []);
 
-  // 🔍 Filtrado básico
+  // Filtrado básico
   const proyectosFiltrados = proyectos.filter((p) =>
     p.nombre.toLowerCase().includes(filtro.toLowerCase())
   );

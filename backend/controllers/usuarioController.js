@@ -254,3 +254,67 @@ exports.eliminarUsuario = async (req, res) => {
     res.status(500).json({ mensaje: "Error al eliminar usuario" });
   }
 };
+
+// ========================================
+// OBTENER TODOS LOS USUARIOS
+// ========================================
+exports.obtenerUsuarios = async (req, res) => {
+  try {
+    const usuarios = await Usuario.find({}, "nombres email telefono roles estado");
+    res.status(200).json(usuarios);
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ mensaje: "Error al obtener usuarios" });
+  }
+};
+
+// ========================================
+// OBTENER USUARIOS CON ROL 'CLIENTE'
+// ========================================
+exports.obtenerClientes = async (req, res) => {
+  try {
+    const clientes = await Usuario.find(
+      { roles: { $in: ["cliente"] }, estado: "activo" },
+      "nombres email telefono roles estado"
+    );
+    res.status(200).json(clientes);
+  } catch (error) {
+    console.error("Error al obtener clientes:", error);
+    res.status(500).json({ mensaje: "Error al obtener clientes" });
+  }
+};
+
+// ========================================
+// OBTENER USUARIOS QUE PUEDEN SER RESPONSABLES
+// ========================================
+exports.obtenerResponsables = async (req, res) => {
+  try {
+    // Buscar usuarios activos que NO sean solo clientes
+    const responsables = await Usuario.find(
+      {
+        estado: "activo",
+        roles: { $ne: ["cliente"] } // excluye a los que solo tienen el rol cliente
+      },
+      "nombres email telefono roles estado"
+    );
+
+    // Filtrado adicional en memoria para asegurarnos:
+    const filtrados = responsables.filter((u) => {
+      // Si tiene el rol cliente, lo excluimos completamente
+      if (u.roles.includes("cliente")) return false;
+
+      // Si no tiene admin, está bien
+      if (!u.roles.includes("administrador")) return true;
+
+      // Si tiene admin + otros roles, también está bien
+      const otros = u.roles.filter((r) => r !== "administrador");
+      return otros.length > 0;
+    });
+
+    res.status(200).json(filtrados);
+  } catch (error) {
+    console.error("Error al obtener responsables:", error);
+    res.status(500).json({ mensaje: "Error al obtener responsables" });
+  }
+};
+

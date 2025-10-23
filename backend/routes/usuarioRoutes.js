@@ -5,9 +5,15 @@ const {
   loginUsuario,
   obtenerUsuario,
   actualizarUsuario,
-  eliminarUsuario
+  eliminarUsuario,
+  obtenerUsuarios,
+  obtenerClientes,
+  obtenerResponsables
 } = require("../controllers/usuarioController");
 
+router.get("/", obtenerUsuarios); // Obtener todos los usuarios
+router.get("/clientes", obtenerClientes); // Solo clientes
+router.get("/responsables", obtenerResponsables); // Solo responsables
 
 // CRUD adicional
 router.get("/:usuario_sistema", obtenerUsuario);

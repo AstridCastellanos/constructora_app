@@ -33,7 +33,7 @@ const uploadFile = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No se recibió ningún archivo" });
 
-    // ✅ Cloudinary siempre devuelve "filename" y "path"
+    // Cloudinary siempre devuelve "filename" y "path"
     res.json({
       url: req.file.path,
       public_id: req.file.filename, // ⚡️ AQUÍ viene el ID real que debes guardar

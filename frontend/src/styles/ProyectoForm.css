@@ -1,0 +1,251 @@
+.proyecto-detalles {
+  height: 100vh;
+  background: white;
+  padding: 0px 20px;
+}
+.proyectos-col{
+    padding: 20px 40px;
+}
+
+.pf-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 8px solid #f5f5f5;
+}
+
+.pf-header h2 {
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 20px;
+}
+
+/* ===== FORMULARIO DE NUEVO PROYECTO ===== */
+.form-proyecto {
+  background: #fff;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.form-proyecto h2 {
+  color: var(--blue);
+  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  gap: 24px 36px;
+  margin-top: 20px;
+}
+
+.form-proyecto label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.form-proyecto input,
+.form-proyecto select,
+.form-proyecto textarea {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.form-proyecto textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Para el input de código de proyecto (solo lectura) */
+.form-proyecto input[readonly] {
+  background: #ececec;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 200px;
+}
+
+/* Botón Actualizar de detalles de proyectos */
+.form-actions-btn {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-guardar {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-cancelar {
+  background: #bcbcbc;
+  color: #333;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-guardar:hover {
+  background: #1d4ed8;
+}
+
+.btn-cancelar:hover {
+  background: #a3a3a3;
+}
+
+
+/* === Documentos Adjuntos === */
+.documentos-section {
+  margin-top: 25px;
+}
+
+.documentos-section h3 {
+  font-size: 18px;
+  color: var(--blue);
+  margin-bottom: 10px;
+}
+
+.documentos-container {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px 14px;
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: #fafafa;
+  margin-bottom: 12px;
+}
+
+.documentos-container ul {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0;
+}
+
+.documentos-container li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.documentos-container a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.documentos-container a:hover {
+  text-decoration: underline;
+}
+
+.documentos-container .download-link {
+  color: #555;
+  margin-left: 8px;
+}
+
+.documentos-container p {
+  color: #777;
+  font-style: italic;
+}
+
+/* Botón Cargar debajo del contenedor */
+.documentos-section .btn-guardar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  background: var(--blue);
+  color: #fff;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.documentos-section .btn-guardar:hover {
+  background: #2d6cb4;
+}
+
+/* === Encabezado de Detalles de Proyecto === */
+.detalles-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8f9fa;
+  padding: 12px 20px;
+  border-bottom: 1px solid #ddd;
+  border-radius: 10px 10px 0 0;
+  position: relative;
+}
+
+.detalles-title {
+  flex: 1;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--blue);
+  margin: 0;
+}
+
+/* === Botones de íconos (chat, volver) === */
+.icon-btn {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.icon-btn:hover {
+  background: #e6f0ff;
+  border-color: #2d6cb4;
+  color: #2d6cb4;
+}
+
+.icon-chat {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.icon-back {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Ajuste visual general para mantener consistencia */
+.p-header.detalles-header h2 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  color: var(--blue);
+}
+

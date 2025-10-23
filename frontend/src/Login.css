@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+body {
+  margin: 0px;
+}
+
 /* Contenedor general dividido en dos columnas */
 .login-container {
   display: flex;

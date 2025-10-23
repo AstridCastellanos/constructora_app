@@ -338,7 +338,7 @@ const handleBuscar = async () => {
         </div>
 
         <div className="usuarios-form">
-          <div className="col">
+          <div className="col"> 
             <label className="u-label">Usuario:</label>
             <div className="search-input">
               <input

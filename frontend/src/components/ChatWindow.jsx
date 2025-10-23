@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Send, Paperclip, ArrowLeft, Download, ChevronDown } from "lucide-react";
+import { Send, Paperclip, ArrowLeft, Download, ChevronDown, Info } from "lucide-react";
+import ProyectoDetalles from "./ProyectoDetalles";
 import "../styles/ChatWindow.css";
 import { io } from "socket.io-client";
-
 
 export default function ChatWindow({ project, onBack }) {
   const [mensajes, setMensajes] = useState([]);
@@ -10,6 +10,7 @@ export default function ChatWindow({ project, onBack }) {
   const [file, setFile] = useState(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [hasNewMessage, setHasNewMessage] = useState(false);
+  const [mostrarDetalles, setMostrarDetalles] = useState(false); // 👈 NUEVO
 
   const messagesEndRef = useRef(null);
   const chatBodyRef = useRef(null);
@@ -148,6 +149,17 @@ export default function ChatWindow({ project, onBack }) {
     setIsAtBottom(atBottom);
   };
 
+  // 👉 NUEVO: mostrar detalles del proyecto
+  if (mostrarDetalles) {
+    return (
+      <ProyectoDetalles
+        proyecto={project}
+        modo="chat"
+        onBack={() => setMostrarDetalles(false)}
+      />
+    );
+  }
+
   return (
     <div className="cw">
       <header className="cw-head">
@@ -157,6 +169,13 @@ export default function ChatWindow({ project, onBack }) {
           </button>
         )}
         <div className="cw-title">{project?.nombre}</div>
+        <button
+          className="cw-info"
+          title="Ver detalles del proyecto"
+          onClick={() => setMostrarDetalles(true)} // 👈 NUEVO
+        >
+          <Info size={20} />
+        </button>
       </header>
 
       <main className="cw-body" ref={chatBodyRef} onScroll={handleScroll}>
@@ -268,7 +287,6 @@ export default function ChatWindow({ project, onBack }) {
         <div ref={messagesEndRef} />
       </main>
 
-      {/* Botón flotante para bajar al último mensaje */}
       {!isAtBottom && (
         <button
           className={`cw-scroll-down ${hasNewMessage ? "has-new" : ""}`}

@@ -16,3 +16,18 @@ export const onlyLettersAndUnderscore = (value) => /^[A-Za-z_]+$/.test(value);
 // Solo letras (con acentos), números y guiones medios
 export const lettersNumbersAndHyphen = (value) =>
   /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9-\s]+$/.test(value); 
+
+// Solo letras, números y espacios (para nombre del proyecto)
+export const onlyLettersNumbersSpaces = (value) => {
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 ]*$/.test(value);
+};
+
+// Evitar caracteres peligrosos en texto libre (como ;, ', --, <, >)
+export const sanitizeText = (value) => {
+  return value.replace(/['";<>]/g, "");
+};
+
+// Solo números positivos con opcional decimal
+export const onlyPositiveNumbers = (value) => {
+  return /^[0-9]*[.]?[0-9]*$/.test(value);
+};

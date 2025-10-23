@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import "../styles/ProyectosPage.css";
 import { lettersNumbersAndHyphen } from "../utils/inputValidators";
+import { useNavigate } from "react-router-dom";
 
 export default function ProyectosPage() {
   const [proyectos, setProyectos] = useState([]);
   const [filtro, setFiltro] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -18,21 +20,20 @@ export default function ProyectosPage() {
       .catch((err) => console.error("Error al cargar proyectos:", err));
   }, []);
 
-  // 🔍 Nueva función de filtrado
+  // Filtro de búsqueda
   const proyectosFiltrados = proyectos.filter((p) => {
     const term = filtro.trim().toLowerCase();
     if (!term) return true;
 
-    // Datos base del proyecto
     const codigo = p.codigo_proyecto?.toLowerCase() || "";
     const cliente = p.participantes?.find(
-      (x) => x.rol_en_proyecto === "cliente"
-    )?.usuario_id?.nombres?.toLowerCase();
-    const responsable = p.participantes?.find(
-      (x) => x.rol_en_proyecto === "arquitecto"
+      (x) => x.tipo_participante === "cliente"
     )?.usuario_id?.nombres?.toLowerCase();
 
-    // Coincidencia en cualquiera de los campos
+    const responsable = p.participantes?.find(
+      (x) => x.tipo_participante === "responsable"
+    )?.usuario_id?.nombres?.toLowerCase();
+
     return (
       codigo.includes(term) ||
       cliente?.includes(term) ||
@@ -40,10 +41,7 @@ export default function ProyectosPage() {
     );
   });
 
-  // Manejar búsqueda al presionar Enter
   const handleBuscar = () => {
-    // No se necesita hacer nada porque el filtro ya se aplica en tiempo real
-    // pero si quieres ejecutar algo extra, lo dejas aquí
     console.log("Buscando:", filtro);
   };
 
@@ -55,20 +53,29 @@ export default function ProyectosPage() {
         <div className="p-header">
           <h2>Proyectos</h2>
 
-          <div className="p-search">
-            <Search />
-            <input
-              placeholder="Buscar proyecto"
-              value={filtro}
-              onChange={(e) => {
-                const value = e.target.value;
-                // Validar solo letras, números y guiones
-                if (value === "" || lettersNumbersAndHyphen(value)) {
-                  setFiltro(value);
-                }
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
-            />
+          <div className="p-actions">
+            <div className="p-search">
+              <Search />
+              <input
+                placeholder="Buscar proyecto"
+                value={filtro}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || lettersNumbersAndHyphen(value)) {
+                    setFiltro(value);
+                  }
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleBuscar()}
+              />
+            </div>
+
+            <button
+              className="btn-nuevo"
+              onClick={() => navigate("/proyectos/nuevo")}
+            >
+              <Plus size={18} />
+              <span>Nuevo</span>
+            </button>
           </div>
         </div>
 
@@ -87,16 +94,21 @@ export default function ProyectosPage() {
             {proyectosFiltrados.length > 0 ? (
               proyectosFiltrados.map((p, i) => {
                 const cliente = p.participantes?.find(
-                  (x) => x.rol_en_proyecto === "cliente"
+                  (x) => x.tipo_participante === "cliente"
                 )?.usuario_id?.nombres;
 
                 const responsable = p.participantes?.find(
-                  (x) => x.rol_en_proyecto === "arquitecto"
+                  (x) => x.tipo_participante === "responsable"
                 )?.usuario_id?.nombres;
 
                 return (
                   <tr key={i}>
-                    <td className="p-codigo">{p.codigo_proyecto}</td>
+                    <td
+                      className="p-codigo link"
+                      onClick={() => navigate(`/proyectos/${p._id}`)}
+                    >
+                      {p.codigo_proyecto}
+                    </td>
                     <td>{p.nombre}</td>
                     <td>{cliente || "-"}</td>
                     <td>{responsable || "-"}</td>
