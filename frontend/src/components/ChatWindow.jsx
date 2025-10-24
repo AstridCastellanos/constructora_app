@@ -1,8 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Send, Paperclip, ArrowLeft, Download, ChevronDown, Info } from "lucide-react";
+import {
+  Send,
+  Paperclip,
+  ArrowLeft,
+  Download,
+  ChevronDown,
+  FileText,
+} from "lucide-react";
 import ProyectoDetalles from "./ProyectoDetalles";
 import "../styles/ChatWindow.css";
 import { io } from "socket.io-client";
+import { useIsMobile } from "../hooks/useIsMobile"; // ✅ Importar el hook
 
 export default function ChatWindow({ project, onBack }) {
   const [mensajes, setMensajes] = useState([]);
@@ -10,38 +18,38 @@ export default function ChatWindow({ project, onBack }) {
   const [file, setFile] = useState(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [hasNewMessage, setHasNewMessage] = useState(false);
-  const [mostrarDetalles, setMostrarDetalles] = useState(false); // 👈 NUEVO
+  const [mostrarDetalles, setMostrarDetalles] = useState(false);
 
   const messagesEndRef = useRef(null);
   const chatBodyRef = useRef(null);
   const socket = useRef(null);
+  const isMobile = useIsMobile(); // ✅ Detectar si es móvil
 
-  // 🟦 Usuario logueado (debe ir antes de los efectos que lo usan)
   const usuarioActual = JSON.parse(localStorage.getItem("usuario")) || {};
 
-  // conexión WebSocket
+  // Conexión WebSocket
   useEffect(() => {
     socket.current = io("http://localhost:4000");
     return () => socket.current.disconnect();
   }, []);
 
-  // escuchar mensajes del proyecto actual
+  // Escuchar mensajes del proyecto actual
   useEffect(() => {
     if (!socket.current) return;
 
     const handler = (msg) => {
-      if (msg.id_proyecto === project._id || msg.id_proyecto?._id === project._id) {
+      if (
+        msg.id_proyecto === project._id ||
+        msg.id_proyecto?._id === project._id
+      ) {
         setMensajes((prev) => [...prev, msg]);
 
         const esPropio =
           msg.autor_id?._id === usuarioActual._id ||
           msg.autor_id?.usuario_sistema === usuarioActual.usuario_sistema;
 
-        if (isAtBottom || esPropio) {
-          scrollToBottom();
-        } else {
-          setHasNewMessage(true);
-        }
+        if (isAtBottom || esPropio) scrollToBottom();
+        else setHasNewMessage(true);
       }
     };
 
@@ -49,19 +57,15 @@ export default function ChatWindow({ project, onBack }) {
     return () => socket.current.off("mensaje-actualizado", handler);
   }, [project, isAtBottom, usuarioActual]);
 
-  // Función para bajar al final del chat
-  const scrollToBottom = () => {
+  // Bajar automáticamente
+  const scrollToBottom = () =>
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
 
-  // Solo bajar automáticamente si el usuario está al fondo o si el mensaje nuevo es propio
   useEffect(() => {
-    if (isAtBottom) {
-      scrollToBottom();
-    }
+    if (isAtBottom) scrollToBottom();
   }, [mensajes, isAtBottom]);
 
-  // Cargar mensajes reales del proyecto
+  // Cargar mensajes del proyecto
   useEffect(() => {
     if (!project?._id) return;
     fetch(`http://localhost:4000/api/mensajes/proyecto/${project._id}`)
@@ -79,7 +83,7 @@ export default function ChatWindow({ project, onBack }) {
     return (inicial1 + inicial2).toUpperCase();
   };
 
-  // Manejar envío de mensaje (texto o archivo)
+  // Enviar mensaje
   const send = async (e) => {
     e.preventDefault();
     if (!message.trim() && !file) return;
@@ -87,7 +91,6 @@ export default function ChatWindow({ project, onBack }) {
     let archivosSubidos = [];
 
     try {
-      // Si hay archivo, primero súbelo a Cloudinary
       if (file) {
         const formData = new FormData();
         formData.append("archivo", file);
@@ -98,11 +101,13 @@ export default function ChatWindow({ project, onBack }) {
         });
         const data = await res.json();
 
-        // Normalizamos tipo de archivo (imagen / pdf / docx)
         let tipoArchivo = "otros";
         if (data.tipo.includes("image")) tipoArchivo = "imagen";
         else if (data.tipo.includes("pdf")) tipoArchivo = "pdf";
-        else if (data.tipo.includes("word") || data.tipo.includes("officedocument"))
+        else if (
+          data.tipo.includes("word") ||
+          data.tipo.includes("officedocument")
+        )
           tipoArchivo = "docx";
 
         archivosSubidos.push({
@@ -114,7 +119,6 @@ export default function ChatWindow({ project, onBack }) {
         });
       }
 
-      // Enviar mensaje a la BD
       const body = {
         id_proyecto: project._id,
         autor_id: usuarioActual._id || usuarioActual.id,
@@ -130,7 +134,6 @@ export default function ChatWindow({ project, onBack }) {
 
       const nuevo = await resMensaje.json();
 
-      // Actualizar vista sin recargar
       socket.current?.emit("nuevo-mensaje", nuevo);
       setMessage("");
       setFile(null);
@@ -139,17 +142,16 @@ export default function ChatWindow({ project, onBack }) {
     }
   };
 
-  // Detectar si el usuario está viendo los mensajes antiguos
+  // Detectar si el usuario está viendo mensajes antiguos
   const handleScroll = () => {
     const el = chatBodyRef.current;
     if (!el) return;
 
-    // Si está a menos de 100px del fondo, lo consideramos "abajo"
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     setIsAtBottom(atBottom);
   };
 
-  // 👉 NUEVO: mostrar detalles del proyecto
+  // Mostrar detalles del proyecto
   if (mostrarDetalles) {
     return (
       <ProyectoDetalles
@@ -163,18 +165,21 @@ export default function ChatWindow({ project, onBack }) {
   return (
     <div className="cw">
       <header className="cw-head">
-        {onBack && (
+        {/* ✅ Solo mostrar la flecha si estamos en móvil y venimos desde ChatPage */}
+        {isMobile && onBack && (
           <button className="cw-back" onClick={onBack} title="Regresar">
             <ArrowLeft />
           </button>
         )}
+
         <div className="cw-title">{project?.nombre}</div>
+
         <button
-          className="cw-info"
+          className="cw-details"
           title="Ver detalles del proyecto"
-          onClick={() => setMostrarDetalles(true)} // 👈 NUEVO
+          onClick={() => setMostrarDetalles(true)}
         >
-          <Info size={20} />
+          <FileText size={20} />
         </button>
       </header>
 
@@ -208,16 +213,19 @@ export default function ChatWindow({ project, onBack }) {
 
                 <div className="b-text">{m.contenido}</div>
 
-                {m.archivos && m.archivos.length > 0 && (
+                {m.archivos?.length > 0 && (
                   <div className="b-files">
                     {m.archivos.map((file, i) => {
                       const tipo = file.tipo;
 
-                      // Si es imagen, mostrar miniatura directamente
                       if (tipo === "imagen" || tipo?.includes("image")) {
                         return (
                           <div key={i} className="b-image-wrapper">
-                            <a href={file.url} target="_blank" rel="noopener noreferrer">
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <img
                                 src={file.url}
                                 alt={file.nombre}
@@ -237,7 +245,6 @@ export default function ChatWindow({ project, onBack }) {
                         );
                       }
 
-                      // Si es PDF o DOCX, mostrar acciones de ver y descargar
                       return (
                         <div
                           key={i}
@@ -302,7 +309,11 @@ export default function ChatWindow({ project, onBack }) {
 
       <form className="cw-input" onSubmit={send}>
         <div className="cw-field">
-          <label htmlFor="fileInput" className="cw-attach" title="Adjuntar archivo">
+          <label
+            htmlFor="fileInput"
+            className="cw-attach"
+            title="Adjuntar archivo"
+          >
             <Paperclip size={20} />
           </label>
           <input

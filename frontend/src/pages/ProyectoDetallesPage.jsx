@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import ProyectoDetalles from "../components/ProyectoDetalles";
-import { useParams, useNavigate } from "react-router-dom";
+import ChatWindow from "../components/ChatWindow";
+import { useParams } from "react-router-dom";
 import "../styles/ProyectoForm.css";
 
 export default function ProyectoDetallesPage() {
   const { id } = useParams();
   const [proyecto, setProyecto] = useState(null);
-  const navigate = useNavigate();
+  const [verChat, setVerChat] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -34,11 +35,18 @@ export default function ProyectoDetallesPage() {
     <div className="layout">
       <Sidebar />
       <section className="proyectos-col">
-        <ProyectoDetalles
-          proyecto={proyecto}
-          modo="page"
-          onOpenChat={(proy) => navigate("/chat", { state: { proyecto: proy } })}
-        />
+        {!verChat ? (
+          <ProyectoDetalles
+            proyecto={proyecto}
+            modo="page"
+            onOpenChat={() => setVerChat(true)} // Cambia a chat
+          />
+        ) : (
+          <ChatWindow
+            project={proyecto}
+            onBack={() => setVerChat(false)} // Regresa al detalle
+          />
+        )}
       </section>
     </div>
   );

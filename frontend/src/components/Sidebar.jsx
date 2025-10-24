@@ -29,7 +29,7 @@ export default function Sidebar() {
   };
 
   // ===============================
-  // 🔐 Control de visibilidad por rol
+  // Control de visibilidad por rol
   // ===============================
   const roles = usuario?.roles || [];
 

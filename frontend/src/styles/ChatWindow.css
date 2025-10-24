@@ -2,54 +2,42 @@
   box-sizing: border-box;
 }
 
-.cw{
-  flex:1;                   
-  display:flex;
-  flex-direction:column;
-  background:var(--bg-light);
-  overflow:hidden;         
-  min-height:0;             
+.cw {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-light);
+  overflow: hidden;
+  min-height: 0;
 }
 
-/* Header fijo (no hace falta sticky si el body es quien scrollea) */
-.cw-head{
-  flex-shrink:0;
-  height:72px;
-  background:var(--white);
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:0 24px;
-  z-index:1;
+/* === HEADER DEL CHAT === */
+.cw-head {
+  flex-shrink: 0;
+  height: 72px;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 🔹 separa los extremos */
+  padding: 0 24px;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 14px;
+  z-index: 1;
 }
 
-/* SOLO aquí va el scroll */
-.cw-body{
-  flex:1;
-  min-height:0;           
-  overflow-y:auto;         
-  padding:32px 40px;
-  display:flex;
-  flex-direction:column;
-  gap:22px;
-  scroll-behavior:smooth;
-}
-
-/* Input fijo abajo */
-.cw-input{
-  flex-shrink:0;
-  border-top:none;
-  padding:14px 20px;
-  background: none;
-  z-index:1;
-}
-
+/* TÍTULO DEL PROYECTO */
 .cw-title {
-  font-size: 15px;
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* BOTÓN DE REGRESO */
+/* BOTÓN DE REGRESO (⬅) */
 .cw-back {
   width: 34px;
   height: 34px;
@@ -64,6 +52,7 @@
   font-size: 18px;
   line-height: 0;
   transition: transform 0.1s ease, opacity 0.1s ease;
+  color: var(--text-dark);
 }
 
 .cw-back:hover {
@@ -71,17 +60,115 @@
   transform: scale(1.05);
 }
 
+/* BOTÓN DE DETALLES (📄) */
+.cw-details {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.1s ease, color 0.2s ease;
+}
 
-/* MENSAJES */
+.cw-details:hover {
+  background: #e6f0ff;
+  color: #2d6cb4;
+  transform: scale(1.05);
+}
+
+/* Tooltip elegante (opcional) */
+.cw-details[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -32px;
+  right: 10px;
+  background: #111827;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 99;
+}
+
+/* === CUERPO DEL CHAT === */
 .cw-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 32px 40px;
   display: flex;
   flex-direction: column;
   gap: 22px;
+  scroll-behavior: smooth;
 }
 
+/* === CAMPO DE MENSAJE (parte inferior) === */
+.cw-input {
+  flex-shrink: 0;
+  border-top: none;
+  padding: 14px 20px;
+  background: none;
+  z-index: 1;
+}
+
+.cw-field {
+  display: flex;
+  align-items: center;
+  justify-items: center;
+  background: var(--white);
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  gap: 10px;
+}
+
+.cw-field input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--text-dark);
+}
+
+/* ÍCONO DE ADJUNTAR */
+.cw-attach {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.cw-attach svg {
+  color: #97bac7;
+}
+
+/* BOTÓN DE ENVIAR */
+.cw-send {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* === MENSAJES === */
 .bubble {
   background: var(--white);
   border-radius: var(--radius);
@@ -140,61 +227,6 @@
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 4px;
-}
-
-/* CAMPO DE MENSAJE */
-.cw-input {
-  border-top: none;
-  padding: 14px 20px;
-}
-
-.cw-field {
-  display: flex;
-  align-items: center;
-  justify-items: center;
-  background: none;
-  border: none;
-  border-radius: 999px;
-  background: var(--white);
-  padding: 8px 12px;
-  gap: 10px;
-}
-
-.cw-field input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 15px;
-  color: var(--text-dark);
-}
-
-/* ÍCONO DE ADJUNTAR */
-.cw-attach {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-
-.cw-attach svg {
-  color: #97bac7;
-}
-
-/* BOTÓN DE ENVIAR */
-.cw-send {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: none;
-  background: var(--accent);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
 }
 
 /* Avatar circular con iniciales */
@@ -300,6 +332,7 @@
   transform: scale(1.05);
 }
 
+/* === BOTÓN DE BAJAR SCROLL === */
 .cw-scroll-down {
   position: absolute;
   right: 20px;
@@ -330,7 +363,7 @@
   animation: pulseNew 1.5s ease-in-out infinite;
 }
 
-/* Pequeño efecto de pulso para llamar la atención */
+/* Pequeño efecto de pulso */
 @keyframes pulseNew {
   0%, 100% {
     transform: scale(1);
@@ -339,5 +372,3 @@
     transform: scale(1.15);
   }
 }
-
-

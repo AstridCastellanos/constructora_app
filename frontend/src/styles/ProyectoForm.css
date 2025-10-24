@@ -4,7 +4,11 @@
   padding: 0px 20px;
 }
 .proyectos-col{
-    padding: 20px 40px;
+    padding: 0px 40px;
+}
+
+.p-header {
+  margin-top: 20px;
 }
 
 .pf-header {
@@ -206,40 +210,28 @@
   margin: 0;
 }
 
-/* === Botones de íconos (chat, volver) === */
+/* BOTÓN DE DETALLES */
 .icon-btn {
-  background: #ffffff;
-  border: 1px solid #ddd;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  width: 38px;
-  height: 38px;
+  border: none;
+  background: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #444;
+  color: #4b5563;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.1s ease, color 0.2s ease;
 }
 
 .icon-btn:hover {
   background: #e6f0ff;
-  border-color: #2d6cb4;
   color: #2d6cb4;
+  transform: scale(1.05);
 }
 
-.icon-chat {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.icon-back {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-}
 
 /* Ajuste visual general para mantener consistencia */
 .p-header.detalles-header h2 {
