@@ -140,32 +140,37 @@ export const obtenerMensajesPorProyecto = async (req, res) => {
     const expiraEn = ahora + 3600; // 1 hora
 
     const mensajesFirmados = mensajes.map((m) => {
-      const archivosFirmados = (m.archivos || []).map((a) => {
-        // Acepta subdocumento o objeto plano
-        const base = typeof a.toObject === "function" ? a.toObject() : a;
+      const archivosFirmados = m.archivos.map((a) => {
+        if (!a.public_id) return a;
 
-        // Decide resource_type
-        const resourceType =
-          base.resource_type ||
-          guessResourceType({ formato: base.formato, mimetype: base.mimetype });
+        // 1) Mapear por 'tipo' que tú guardas en Mongo
+        let resource_type;
+        switch (a.tipo) {
+          case "imagen": resource_type = "image"; break;
+          case "video":  resource_type = "video"; break;
+          default:       resource_type = "raw";   break; // pdf/docx/otros
+        }
 
-        const signedUrl = cloudinary.url(base.public_id, {
-          resource_type: resourceType, // 'image' | 'video' | 'raw'
+        // 2) Fallback heurístico si por alguna razón 'tipo' viniera vacío
+        if (!resource_type) {
+          const pid = String(a.public_id).toLowerCase();
+          resource_type =
+            /\.(jpg|jpeg|png|gif|webp|svg)$/.test(pid) ? "image" :
+            /\.(mp4|mov|webm|avi|mkv)$/.test(pid)      ? "video" :
+            "raw";
+        }
+
+        const signedUrl = cloudinary.url(a.public_id, {
+          resource_type,
           type: "upload",
           sign_url: true,
-          expires_at: expiraEn,
-          // Si quieres forzar descarga para 'raw', podrías añadir flags adicionales
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
         });
 
-        return {
-          ...base,
-          url_firmada: signedUrl,
-          resource_type: resourceType,
-        };
+        return { ...a.toObject(), url_firmada: signedUrl, resource_type };
       });
 
-      const plano = typeof m.toObject === "function" ? m.toObject() : m;
-      return { ...plano, archivos: archivosFirmados };
+      return { ...m.toObject(), archivos: archivosFirmados };
     });
 
     return res.json(mensajesFirmados);

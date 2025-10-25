@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const Counter = require("./Counter");
 
 const participanteSchema = new mongoose.Schema({
   usuario_id: {
@@ -17,26 +18,30 @@ const participanteSchema = new mongoose.Schema({
 const proyectoSchema = new mongoose.Schema({
   codigo_proyecto: {
     type: String,
-    unique: true,
+    unique: true, 
   },
   nombre: {
     type: String,
     required: true,
+    trim: true,
   },
   descripcion: String,
   direccion: String,
   presupuesto_aprox: {
     type: Number,
     required: true,
+    min: [0, "El presupuesto debe ser mayor o igual a 0"],
   },
   saldo_abonado: {
     type: Number,
     default: 0,
+    min: [0, "El saldo abonado no puede ser negativo"],
   },
   saldo_pendiente: {
     type: Number,
     default: function () {
-      return this.presupuesto_aprox - this.saldo_abonado;
+      // se recalcula en hooks también
+      return (this.presupuesto_aprox || 0) - (this.saldo_abonado || 0);
     },
   },
   fecha_inicio: {
@@ -53,39 +58,41 @@ const proyectoSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+}, {
+  timestamps: false,
 });
 
-// Calcular saldo pendiente automáticamente
+// Calcular saldo_pendiente automáticamente al guardar documento nuevo o existente
 proyectoSchema.pre("save", function (next) {
-  this.saldo_pendiente = this.presupuesto_aprox - this.saldo_abonado;
+  this.saldo_pendiente = (this.presupuesto_aprox || 0) - (this.saldo_abonado || 0);
   next();
 });
 
-// Generar automáticamente un código correlativo tipo P-0001
-proyectoSchema.pre("save", async function (next) {
-  if (this.isNew && !this.codigo_proyecto) {
-    try {
-      const ultimoProyecto = await mongoose
-        .model("Proyecto")
-        .findOne()
-        .sort({ _id: -1 });
+// También recalcular cuando actualizas vía findOneAndUpdate/ findByIdAndUpdate
+proyectoSchema.pre(["findOneAndUpdate", "findByIdAndUpdate"], function (next) {
+  const update = this.getUpdate() || {};
+  const $set = update.$set || {};
+  const $inc = update.$inc || {};
 
-      let nuevoCodigo = "P-0001";
+  next();
+});
 
-      if (ultimoProyecto && ultimoProyecto.codigo_proyecto) {
-        const numero =
-          parseInt(ultimoProyecto.codigo_proyecto.replace("P-", "")) + 1;
-        nuevoCodigo = `P-${numero.toString().padStart(4, "0")}`;
-      }
+// Generar automáticamente un código correlativo tipo P-0001, P-0002, ... de forma atómica
+proyectoSchema.pre("validate", async function (next) {
+  if (!this.isNew || this.codigo_proyecto) return next();
+  try {
+    const c = await Counter.findOneAndUpdate(
+      { _id: "proyecto" },        
+      { $inc: { seq: 1 } },       
+      { new: true, upsert: true } 
+    );
 
-      this.codigo_proyecto = nuevoCodigo;
-      next();
-    } catch (error) {
-      console.error("Error generando código de proyecto:", error);
-      next(error);
-    }
-  } else {
+    const n = c.seq;
+
+    this.codigo_proyecto = `P-${String(n).padStart(4, "0")}`;
     next();
+  } catch (error) {
+    next(error);
   }
 });
 

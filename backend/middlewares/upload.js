@@ -1,10 +1,10 @@
 const multer = require("multer");
 
 const storage = multer.memoryStorage();
-const limits = { fileSize: 20 * 1024 * 1024 }; // 20 MB
+const limits = { fileSize: 100 * 1024 * 1024 };// 20 MB
 
 const MIME_PERMITIDOS = new Set([
-  "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml",
+  "image/jpeg", "image/png", "image/gif", "image/webp",
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -12,6 +12,7 @@ const MIME_PERMITIDOS = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "video/mp4", "video/webm", "video/quicktime",
   "text/plain",
 ]);
 

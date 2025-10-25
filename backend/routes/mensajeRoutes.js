@@ -3,6 +3,7 @@ const router = express.Router();
 const Mensaje = require("../models/Mensaje");
 const cloudinary = require("../config/cloudinary.js").default;
 const axios = require("axios");
+const ProyectoDocumento = require("../models/ProyectoDocumento");
 
 // Crear un nuevo mensaje
 router.post("/", async (req, res) => {
@@ -31,14 +32,21 @@ router.get("/", async (req, res) => {
       const archivosFirmados = m.archivos.map((a) => {
         if (!a.public_id) return a;
 
+        const pid = String(a.public_id).toLowerCase();
+        const resource_type =
+          /\.(jpg|jpeg|png|gif|webp|svg)$/.test(pid) ? "image" :
+          /\.(mp4|mov|webm|avi|mkv)$/.test(pid)      ? "video" :
+          "raw";
+
         const signedUrl = cloudinary.url(a.public_id, {
-          resource_type: "raw",
+          secure: true,
+          resource_type,
           type: "upload",
           sign_url: true,
           expires_at: Math.floor(Date.now() / 1000) + 3600,
         });
 
-        return { ...a.toObject(), url_firmada: signedUrl };
+        return { ...a.toObject(), url_firmada: signedUrl, resource_type };
       });
 
       return { ...m.toObject(), archivos: archivosFirmados };
@@ -64,14 +72,21 @@ router.get("/proyecto/:id_proyecto", async (req, res) => {
       const archivosFirmados = m.archivos.map((a) => {
         if (!a.public_id) return a;
 
+        const pid = String(a.public_id).toLowerCase();
+        const resource_type =
+          /\.(jpg|jpeg|png|gif|webp|svg)$/.test(pid) ? "image" :
+          /\.(mp4|mov|webm|avi|mkv)$/.test(pid)      ? "video" :
+          "raw";
+
         const signedUrl = cloudinary.url(a.public_id, {
-          resource_type: "raw",
+          secure: true,
+          resource_type,
           type: "upload",
           sign_url: true,
           expires_at: Math.floor(Date.now() / 1000) + 3600,
         });
 
-        return { ...a.toObject(), url_firmada: signedUrl };
+        return { ...a.toObject(), url_firmada: signedUrl, resource_type };
       });
 
       return { ...m.toObject(), archivos: archivosFirmados };
@@ -87,53 +102,108 @@ router.get("/proyecto/:id_proyecto", async (req, res) => {
   }
 });
 
-// Descargar archivo (compatible con imágenes, PDF, DOCX, etc.)
+// Descargar/abrir archivo (imágenes y videos redirigen, RAW se proxyea con headers)
 router.get(/^\/archivo\/(.+)$/, async (req, res) => {
   try {
-    const public_id = req.params[0];
-    const { download } = req.query; // ?download=true
-
+    const public_id = decodeURIComponent(req.params[0] || "");
     if (!public_id) return res.status(400).json({ error: "Falta el public_id" });
 
-    // Detectar tipo MIME
-    let contentType = "application/octet-stream";
-    let resourceType = "raw";
+    const download = String(req.query.download) === "true";
 
-    if (public_id.match(/\.pdf$/i)) {
-      contentType = "application/pdf";
-      resourceType = "raw";
-    } else if (public_id.match(/\.docx$/i)) {
-      contentType =
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-      resourceType = "raw";
-    } else if (public_id.match(/\.(jpg|jpeg|png)$/i)) {
-      contentType = "image/jpeg";
-      resourceType = "image";
+    // Determinar resource_type con prioridad al query ?rt=
+    let resource_type = req.query.rt;
+    if (!["image", "video", "raw"].includes(resource_type)) resource_type = undefined;
+
+    // Si no viene, deducir por lo que hay en Mongo
+    let tipo, nombre, formato, mimetype;
+
+    const msg = await Mensaje.findOne(
+      { "archivos.public_id": public_id },
+      { "archivos.$": 1 }
+    ).lean();
+
+    if (msg?.archivos?.[0]) {
+      const a = msg.archivos[0];
+      tipo = a.tipo;
+      nombre = a.nombre;
+      formato = a.formato;
+      mimetype = a.mimetype;
     }
 
-    const fileUrl = cloudinary.url(public_id, {
-      resource_type: resourceType,
+    if (!tipo || !resource_type) {
+      const doc = await ProyectoDocumento.findOne(
+        { public_id },
+        { nombre: 1, formato: 1 }
+      ).lean();
+      if (doc) {
+        nombre = nombre || doc.nombre;
+        formato = formato || doc.formato;
+        if (!tipo && formato) {
+          const f = String(formato).toLowerCase();
+          if (["jpg","jpeg","png","gif","webp","svg"].includes(f)) tipo = "imagen";
+          else if (["mp4","mov","webm","avi","mkv"].includes(f))   tipo = "video";
+          else tipo = "otros";
+        }
+      }
+    }
+
+    if (!resource_type) {
+      switch (tipo) {
+        case "imagen": resource_type = "image"; break;
+        case "video":  resource_type = "video"; break;
+        default:       resource_type = "raw";   break;
+      }
+    }
+
+    // URL firmada (https) con opción de descarga para image/video
+    const defaultBase = public_id.split("/").pop() || "archivo";
+    const filename =
+      nombre || (formato ? `${defaultBase}.${formato}` : defaultBase);
+
+    const signedUrl = cloudinary.url(public_id, {
+      secure: true,
+      resource_type,
       type: "upload",
-      sign_url: false, 
+      sign_url: true,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      flags: download ? "attachment" : undefined,
+      attachment: download ? filename : undefined,
     });
 
-    const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
-    const nombreArchivo = public_id.split("/").pop();
+    // Imágenes y videos: redirige
+    if (resource_type !== "raw") {
+      return res.redirect(signedUrl);
+    }
+
+    // RAW (PDF/DOCX): proxy con headers correctos
+    const ct =
+      mimetype ||
+      (tipo === "pdf"
+        ? "application/pdf"
+        : tipo === "docx"
+        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        : formato === "pdf"
+        ? "application/pdf"
+        : formato === "docx"
+        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        : "application/octet-stream");
+
+    const disp = download ? "attachment" : "inline";
+
+    const fileRes = await axios.get(signedUrl, { responseType: "arraybuffer" });
 
     res.set({
-      "Content-Type": contentType,
-      "Content-Disposition":
-        download === "true"
-          ? `attachment; filename="${nombreArchivo}"`
-          : `inline; filename="${nombreArchivo}"`,
+      "Content-Type": ct,
+      "Content-Disposition": `${disp}; filename="${filename}"`,
+      "Cache-Control": "private, max-age=0, no-cache",
+      "X-Content-Type-Options": "nosniff",
     });
 
-    res.send(response.data);
+    return res.send(fileRes.data);
   } catch (error) {
-    console.error("❌ Error al procesar archivo:", error.message);
-    res.status(500).json({ error: "Error al procesar archivo" });
+    console.error("Error al procesar archivo:", error.message);
+    return res.status(500).json({ error: "Error al procesar archivo" });
   }
 });
-
 
 module.exports = router;

@@ -6,11 +6,12 @@ import {
   Download,
   ChevronDown,
   FileText,
+  X, // se usa para quitar adjunto en la pastilla
 } from "lucide-react";
 import ProyectoDetalles from "./ProyectoDetalles";
 import "../styles/ChatWindow.css";
 import { io } from "socket.io-client";
-import { useIsMobile } from "../hooks/useIsMobile"; // ✅ Importar el hook
+import { useIsMobile } from "../hooks/useIsMobile"; 
 
 export default function ChatWindow({ project, onBack }) {
   const [mensajes, setMensajes] = useState([]);
@@ -23,7 +24,7 @@ export default function ChatWindow({ project, onBack }) {
   const messagesEndRef = useRef(null);
   const chatBodyRef = useRef(null);
   const socket = useRef(null);
-  const isMobile = useIsMobile(); // ✅ Detectar si es móvil
+  const isMobile = useIsMobile(); 
 
   const usuarioActual = JSON.parse(localStorage.getItem("usuario")) || {};
 
@@ -58,12 +59,70 @@ export default function ChatWindow({ project, onBack }) {
   }, [project, isAtBottom, usuarioActual]);
 
   // Bajar automáticamente
-  const scrollToBottom = () =>
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Actualizado: permitir modo instantáneo para el primer render o cuando sea necesario
+  const scrollToBottom = ({ instant = false } = {}) =>
+    messagesEndRef.current?.scrollIntoView({
+      behavior: instant ? "auto" : "smooth",
+      block: "end",
+    });
+
+  // Nuevo: al montar el componente, baja al final después de que el DOM haya calculado alturas
+  useEffect(() => {
+    // Dos requestAnimationFrame garantizan que se haya pintado y medido el layout
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => scrollToBottom({ instant: true }));
+    });
+  }, []);
 
   useEffect(() => {
     if (isAtBottom) scrollToBottom();
   }, [mensajes, isAtBottom]);
+
+  // Nuevo: volver a bajar cuando cargan imágenes/adjuntos que modifican la altura del contenedor
+  useEffect(() => {
+    const el = chatBodyRef.current;
+    if (!el) return;
+
+    // Si ya estabas al fondo, baja de nuevo tras la pintura
+    if (isAtBottom) {
+      requestAnimationFrame(() => scrollToBottom({ instant: true }));
+    }
+
+    const imgs = el.querySelectorAll("img.b-file-thumb");
+    let pending = 0;
+
+    const onImgSettled = () => {
+      pending--;
+      if (pending <= 0 && isAtBottom) {
+        scrollToBottom({ instant: true });
+      }
+    };
+
+    imgs.forEach((img) => {
+      if (img.complete) return;
+      pending++;
+      img.addEventListener("load", onImgSettled);
+      img.addEventListener("error", onImgSettled);
+    });
+
+    return () => {
+      imgs.forEach((img) => {
+        img.removeEventListener("load", onImgSettled);
+        img.removeEventListener("error", onImgSettled);
+      });
+    };
+  }, [mensajes, isAtBottom]);
+
+  // Nuevo: mantener el scroll al fondo si cambia el tamaño del contenedor (por CSS o cambios de layout)
+  useEffect(() => {
+    if (!chatBodyRef.current) return;
+    const el = chatBodyRef.current;
+    const ro = new ResizeObserver(() => {
+      if (isAtBottom) scrollToBottom({ instant: true });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isAtBottom]);
 
   // Cargar mensajes del proyecto
   useEffect(() => {
@@ -109,6 +168,7 @@ export default function ChatWindow({ project, onBack }) {
           data.tipo.includes("officedocument")
         )
           tipoArchivo = "docx";
+        else if (data.tipo.includes("video")) tipoArchivo = "video"; // permitir video
 
         archivosSubidos.push({
           url: data.url,
@@ -162,10 +222,26 @@ export default function ChatWindow({ project, onBack }) {
     );
   }
 
+  // --- Helpers para el link de descarga/visualización con el resource_type correcto
+  const rtFromTipo = (tipo) => {
+    if (!tipo) return "raw";
+    if (tipo === "imagen" || String(tipo).includes("image")) return "image";
+    if (tipo === "video"  || String(tipo).includes("video"))  return "video";
+    return "raw"; // pdf, docx, xlsx, pptx, txt, etc.
+  };
+
+  const buildDownloadHref = (publicId, tipo, download = true) => {
+    const rt = rtFromTipo(tipo);
+    const base = `http://localhost:4000/api/mensajes/archivo/${encodeURIComponent(publicId)}`;
+    const qs = `rt=${rt}${download ? "&download=true" : ""}`;
+    return `${base}?${qs}`;
+  };
+
+
   return (
     <div className="cw">
       <header className="cw-head">
-        {/* ✅ Solo mostrar la flecha si estamos en móvil y venimos desde ChatPage */}
+        {/* Solo mostrar la flecha si estamos en móvil y venimos desde ChatPage */}
         {isMobile && onBack && (
           <button className="cw-back" onClick={onBack} title="Regresar">
             <ArrowLeft />
@@ -234,10 +310,32 @@ export default function ChatWindow({ project, onBack }) {
                             </a>
 
                             <a
-                              href={`http://localhost:4000/api/mensajes/archivo/${file.public_id}?download=true`}
+                              href={buildDownloadHref(file.public_id, tipo, true)}
                               rel="noopener noreferrer"
                               className="b-download-icon"
-                              title="Descargar imagen"
+                              title="Descargar"
+                            >
+                              <Download size={18} />
+                            </a>
+                          </div>
+                        );
+                      }
+
+                      // Nuevo: soporte de video
+                      if (tipo === "video" || tipo?.includes("video")) {
+                        return (
+                          <div key={i} className="b-video-wrapper">
+                            <video
+                              className="b-video"
+                              src={file.url}
+                              controls
+                              playsInline
+                            />
+                            <a
+                              href={buildDownloadHref(file.public_id, tipo, false)}
+                              title="Descargar video"
+                              rel="noopener noreferrer"
+                              className="b-download-icon"
                             >
                               <Download size={18} />
                             </a>
@@ -256,7 +354,7 @@ export default function ChatWindow({ project, onBack }) {
                           }}
                         >
                           <a
-                            href={`http://localhost:4000/api/mensajes/archivo/${file.public_id}`}
+                            href={buildDownloadHref(file.public_id, tipo, false)}
                             target="_blank"
                             rel="noopener noreferrer"
                             style={{
@@ -269,7 +367,7 @@ export default function ChatWindow({ project, onBack }) {
                             {file.nombre}
                           </a>
                           <a
-                            href={`http://localhost:4000/api/mensajes/archivo/${file.public_id}?download=true`}
+                            href={buildDownloadHref(file.public_id, tipo, true)}
                             title="Descargar archivo"
                             rel="noopener noreferrer"
                             style={{ color: "#555" }}
@@ -308,6 +406,22 @@ export default function ChatWindow({ project, onBack }) {
       )}
 
       <form className="cw-input" onSubmit={send}>
+        {/* Pastilla visible del archivo adjunto */}
+        {file && (
+          <div className="cw-attach-chip" role="status" aria-live="polite">
+            <span className="cw-attach-name">{file.name}</span>
+            <button
+              type="button"
+              className="cw-attach-remove"
+              onClick={() => setFile(null)}
+              aria-label="Quitar adjunto"
+              title="Quitar adjunto"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         <div className="cw-field">
           <label
             htmlFor="fileInput"
@@ -320,6 +434,19 @@ export default function ChatWindow({ project, onBack }) {
             id="fileInput"
             type="file"
             style={{ display: "none" }}
+            // Aceptar los formatos que ya tienes en backend + video
+            accept="
+              image/jpeg,image/png,image/gif,image/webp,image/svg+xml,
+              application/pdf,
+              application/msword,
+              application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+              application/vnd.ms-excel,
+              application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,
+              application/vnd.ms-powerpoint,
+              application/vnd.openxmlformats-officedocument.presentationml.presentation,
+              text/plain,
+              video/mp4,video/webm,video/quicktime
+            "
             onChange={(e) => setFile(e.target.files[0])}
           />
           <input

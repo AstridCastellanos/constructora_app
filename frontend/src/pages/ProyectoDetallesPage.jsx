@@ -39,12 +39,13 @@ export default function ProyectoDetallesPage() {
           <ProyectoDetalles
             proyecto={proyecto}
             modo="page"
-            onOpenChat={() => setVerChat(true)} // Cambia a chat
+            onOpenChat={() => setVerChat(true)}
           />
         ) : (
           <ChatWindow
+            key={proyecto._id}        
             project={proyecto}
-            onBack={() => setVerChat(false)} // Regresa al detalle
+            onBack={() => setVerChat(false)}
           />
         )}
       </section>

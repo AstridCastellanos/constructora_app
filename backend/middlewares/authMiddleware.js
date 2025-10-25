@@ -1,22 +1,32 @@
+// middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
   try {
-    // Leer el token del encabezado
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    // Express normaliza headers a minúsculas en req.headers,
+    // pero req.header(...) es case-insensitive. Aun así, soportamos varias fuentes.
+    const raw =
+      req.header("authorization") ||
+      req.header("Authorization") ||
+      req.headers["x-access-token"];
 
-    if (!token) {
+    if (!raw) {
       return res.status(401).json({ mensaje: "Acceso denegado. Token no proporcionado." });
     }
 
-    // Verificar token
+    // Soportar "Bearer <token>" o solo "<token>"
+    const token = raw.startsWith("Bearer ") ? raw.slice(7).trim() : raw.trim();
+    if (!token) {
+      return res.status(401).json({ mensaje: "Acceso denegado. Token inválido." });
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Guardar datos del usuario en la solicitud
     req.usuario = decoded;
-
-    next(); // continuar hacia el controlador
+    return next();
   } catch (error) {
-    res.status(401).json({ mensaje: "Token inválido o expirado." });
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ mensaje: "Token expirado." });
+    }
+    return res.status(401).json({ mensaje: "Token inválido." });
   }
 };

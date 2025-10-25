@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const archivoSchema = new mongoose.Schema({
-  public_id: { type: String, required: true }, // ✅ ahora obligatorio, Cloudinary siempre lo devuelve
+  public_id: { type: String, required: true }, 
   url: { type: String, required: true },
   tipo: {
     type: String,
-    enum: ["imagen", "pdf", "docx", "otros"], // ✅ más flexible
+    enum: ["imagen", "pdf", "docx", "otros", "video"], // <-- agrega 'video'
     default: "otros",
   },
   nombre: { type: String },
