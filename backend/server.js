@@ -14,6 +14,7 @@ const notificacionRoutes = require("./routes/notificacionRoutes");
 const cambioProyectoRoutes = require("./routes/cambioProyectoRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const protegidaRoutes = require("./routes/protegidaRoutes");
+const proyectoDocumentosRoutes = require("./routes/proyectoDocumentosRoutes");
 
 const app = express();
 
@@ -41,7 +42,7 @@ mongoose
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] },
-});
+}); 
 app.set("io", io);
 
 // Rutas
@@ -52,6 +53,7 @@ app.use("/api/mensajes", mensajeRoutes);
 app.use("/api/notificaciones", notificacionRoutes);
 app.use("/api/cambios", cambioProyectoRoutes);
 app.use("/api/archivos", uploadRoutes);
+app.use("/api", proyectoDocumentosRoutes);
 
 // Socket.IO
 io.on("connection", (socket) => {

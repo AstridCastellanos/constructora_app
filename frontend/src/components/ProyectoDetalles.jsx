@@ -1,4 +1,3 @@
-// src/components/ProyectoDetalles.jsx
 import React, { useState, useEffect, useContext, useCallback } from "react";
 import { MessageSquare, Upload, Download } from "lucide-react";
 import ModalMensaje from "./ModalMensaje";
@@ -12,16 +11,20 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
   // Solo lectura si es cliente y NO es titular ni colaborador
   const isReadOnly = roles.includes("cliente") && !roles.some(r => r === "titular" || r === "colaborador");
 
+  // Bloqueo por estado Finalizado
   const [form, setForm] = useState({
     descripcion: "",
     estado: "En Curso",
     direccion: "",
     presupuesto_aprox: "",
-    saldo_abonado: "",   // siempre solo lectura
-    saldo_a_abonar: "",  // se envía al backend
+    saldo_abonado: "",
+    saldo_a_abonar: "",
     cliente: "",
     responsable: "",
   });
+
+  const isFinalizado = (proyecto?.estado || form.estado) === "Finalizado";
+  const isLocked = isReadOnly || isFinalizado;
 
   const [usuarios, setUsuarios] = useState({ clientes: [], responsables: [] });
   const [documentos, setDocumentos] = useState([]);
@@ -32,25 +35,22 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
   const mostrarModal = (config) => setModal({ visible: true, ...config });
   const cerrarModal = () => setModal((m) => ({ ...m, visible: false }));
 
-  // Normalizador para que mensajes y documentos del proyecto tengan el mismo shape
+  // Normalizador de shape
   const normalizeDoc = (d) => {
     if (!d) return null;
-    // Algunos vienen como subdocumentos Mongoose (con toObject); homogenizamos:
     const base = typeof d.toObject === "function" ? d.toObject() : d;
-
     return {
       public_id: base.public_id,
       nombre: base.nombre || base.original_filename || "archivo",
       url: base.url,
-      url_firmada: base.url_firmada, // si tu backend la envía
-      resource_type: base.resource_type, // opcional (image|video|raw)
+      url_firmada: base.url_firmada,
+      resource_type: base.resource_type,
       formato: base.formato,
       tamaño: base.tamaño,
-      _origen: base._origen || undefined, // etiqueta opcional para debug
+      _origen: base._origen || undefined,
     };
   };
 
-  // Cargar listas (clientes/responsables)
   useEffect(() => {
     const token = localStorage.getItem("token");
     Promise.all([
@@ -65,10 +65,25 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       .catch((err) => console.error("Error al cargar usuarios:", err));
   }, []);
 
-  // 🔹 Helper: carga adjuntos de mensajes + documentos del proyecto y deduplica
+  // ==== NUEVO: helpers para links centralizados ====
+  const rtForDoc = (doc) => {
+    if (doc?.resource_type) return doc.resource_type; // "image" | "video" | "raw"
+    const f = String(doc?.formato || "").toLowerCase();
+    if (["jpg","jpeg","png","gif","webp","svg"].includes(f)) return "image";
+    if (["mp4","mov","webm","avi","mkv"].includes(f)) return "video";
+    return "raw";
+  };
+
+  const buildArchivoUrl = (doc, download = false) => {
+    const rt = rtForDoc(doc);
+    const base = `http://localhost:4000/api/mensajes/archivo/${encodeURIComponent(doc.public_id)}`;
+    return `${base}?rt=${rt}${download ? "&download=true" : ""}`;
+  };
+  // =================================================
+
+  // Cargar documentos (adjuntos del chat + docs del proyecto)
   const loadDocumentos = useCallback(async (proyectoId) => {
     if (!proyectoId) return;
-
     const token = localStorage.getItem("token");
 
     try {
@@ -84,23 +99,18 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       const dataMensajes = resMensajes.ok ? await resMensajes.json() : [];
       const dataDocs = resDocsProyecto.ok ? await resDocsProyecto.json() : [];
 
-      // 1) Adjuntos que vienen dentro de mensajes
       const adjuntosMensajes = dataMensajes
         .flatMap((m) => Array.isArray(m.archivos) ? m.archivos : [])
         .map((a) => ({ ...normalizeDoc(a), _origen: "mensaje" }))
         .filter(Boolean);
 
-      // 2) Documentos del proyecto (ruta nueva)
       const docsProyecto = (Array.isArray(dataDocs) ? dataDocs : [])
         .map((a) => ({ ...normalizeDoc(a), _origen: "proyecto" }))
         .filter(Boolean);
 
-      // 3) Unir y deduplicar por public_id (mantén primero el de mensajes por si trae url_firmada)
       const map = new Map();
       [...adjuntosMensajes, ...docsProyecto].forEach((doc) => {
-        if (doc?.public_id && !map.has(doc.public_id)) {
-          map.set(doc.public_id, doc);
-        }
+        if (doc?.public_id && !map.has(doc.public_id)) map.set(doc.public_id, doc);
       });
 
       setDocumentos(Array.from(map.values()));
@@ -109,7 +119,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     }
   }, []);
 
-  // Cargar datos del proyecto + documentos (mensajes + proyecto)
+  // Cargar datos del proyecto + documentos
   useEffect(() => {
     if (!proyecto?._id) return;
 
@@ -128,16 +138,14 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       responsable: responsableObj?.usuario_id?._id || "",
     }));
 
-    // 🔹 trae adjuntos de ambas fuentes
     loadDocumentos(proyecto._id);
   }, [proyecto, loadDocumentos]);
 
-  // Guardar: ENVÍA saldo_a_abonar para que el backend lo sume de forma atómica
+  // Guardar proyecto
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (isReadOnly) return;
+    if (isLocked) return;
 
-    // Validaciones mínimas
     if (!form.direccion.trim()) {
       return mostrarModal({ titulo: "Campo obligatorio", mensaje: `El campo "Dirección" es obligatorio.`, tipo: "warning", onAceptar: cerrarModal });
     }
@@ -152,7 +160,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     }
 
     const token = localStorage.getItem("token");
-
     const body = {
       descripcion: form.descripcion.trim(),
       direccion: form.direccion.trim(),
@@ -179,80 +186,47 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
           saldo_a_abonar: "",
           saldo_abonado: data?.saldo_abonado != null ? String(data.saldo_abonado) : s.saldo_abonado,
         }));
-
-        mostrarModal({
-          titulo: "Proyecto actualizado",
-          mensaje: "Los datos se enviaron correctamente.",
-          tipo: "success",
-          onAceptar: cerrarModal,
-        });
+        mostrarModal({ titulo: "Proyecto actualizado", mensaje: "Los datos se enviaron correctamente.", tipo: "success", onAceptar: cerrarModal });
       } else {
-        mostrarModal({
-          titulo: "Error",
-          mensaje: data?.mensaje || "No se pudo actualizar el proyecto.",
-          tipo: "error",
-          onAceptar: cerrarModal,
-        });
+        mostrarModal({ titulo: "Error", mensaje: data?.mensaje || "No se pudo actualizar el proyecto.", tipo: "error", onAceptar: cerrarModal });
       }
     } catch (error) {
       console.error("Error al actualizar proyecto:", error);
-      mostrarModal({
-        titulo: "Error de conexión",
-        mensaje: "No se pudo conectar con el servidor.",
-        tipo: "error",
-        onAceptar: cerrarModal,
-      });
+      mostrarModal({ titulo: "Error de conexión", mensaje: "No se pudo conectar con el servidor.", tipo: "error", onAceptar: cerrarModal });
     }
   };
 
-  // Subir documento (oculto en solo lectura)
+  // Subir documento
   const handleUploadClick = () => {
-    if (isReadOnly) return;
+    if (isLocked) return;
     const input = document.createElement("input");
     input.type = "file";
     input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+      const file = e.target.files[0];
+      if (!file) return;
 
-        const token = localStorage.getItem("token");
-        const formData = new FormData();
-        formData.append("archivo", file);
-        // Ya NO es necesario id_proyecto en el body; va en la URL:
-        // formData.append("id_proyecto", proyecto._id);
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("archivo", file);
 
-        try {
+      try {
         const res = await fetch(`http://localhost:4000/api/proyectos/${proyecto._id}/documentos`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
         });
         const data = await res.json();
 
         if (res.ok) {
-            await loadDocumentos(proyecto._id); // recarga mensajes + docs del proyecto
-            mostrarModal({
-            titulo: "Archivo cargado",
-            mensaje: "El documento se adjuntó correctamente.",
-            tipo: "success",
-            onAceptar: cerrarModal,
-            });
+          await loadDocumentos(proyecto._id);
+          mostrarModal({ titulo: "Archivo cargado", mensaje: "El documento se adjuntó correctamente.", tipo: "success", onAceptar: cerrarModal });
         } else {
-            mostrarModal({
-            titulo: "Error",
-            mensaje: data?.mensaje || "No se pudo subir el archivo.",
-            tipo: "error",
-            onAceptar: cerrarModal,
-            });
+          mostrarModal({ titulo: "Error", mensaje: data?.mensaje || "No se pudo subir el archivo.", tipo: "error", onAceptar: cerrarModal });
         }
-        } catch (err) {
+      } catch (err) {
         console.error("Error subiendo archivo:", err);
-        mostrarModal({
-            titulo: "Error",
-            mensaje: "No se pudo subir el archivo.",
-            tipo: "error",
-            onAceptar: cerrarModal,
-        });
-        }
+        mostrarModal({ titulo: "Error", mensaje: "No se pudo subir el archivo.", tipo: "error", onAceptar: cerrarModal });
+      }
     };
     input.click();
   };
@@ -278,6 +252,23 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
         )}
       </header>
 
+      {/* Aviso de bloqueo por estado Finalizado */}
+      {isFinalizado && (
+        <div
+          style={{
+            margin: "6px 0 0",
+            padding: "10px 12px",
+            borderRadius: "8px",
+            background: "#fff7ed",
+            border: "1px solid #fed7aa",
+            color: "#7c2d12",
+            fontSize: "14px",
+          }}
+        >
+          Este proyecto está finalizado. La edición de campos y carga de documentos está bloqueada.
+        </div>
+      )}
+
       {/* FORMULARIO: orden nuevo */}
       <form className="form-proyecto" onSubmit={handleUpdate}>
         <div className="form-grid">
@@ -287,7 +278,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             <textarea
               name="descripcion"
               value={form.descripcion}
-              disabled={isReadOnly}
+              disabled={isLocked}
               onChange={(e) => setForm({ ...form, descripcion: sanitizeText(e.target.value) })}
             ></textarea>
           </label>
@@ -298,9 +289,9 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             <select
               name="estado"
               value={form.estado}
-              disabled={isReadOnly}
+              disabled={isLocked}
               onChange={(e) => setForm({ ...form, estado: e.target.value })}
-              title={isReadOnly ? "Solo lectura para clientes" : undefined}
+              title={isLocked ? "Solo lectura" : undefined}
             >
               <option>En Curso</option>
               <option>Finalizado</option>
@@ -316,7 +307,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
               type="text"
               name="direccion"
               value={form.direccion}
-              disabled={isReadOnly}
+              disabled={isLocked}
               onChange={(e) => setForm({ ...form, direccion: sanitizeText(e.target.value) })}
             />
           </label>
@@ -328,7 +319,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
               type="text"
               name="presupuesto_aprox"
               value={form.presupuesto_aprox}
-              disabled={isReadOnly}
+              disabled={isLocked}
               onChange={(e) => {
                 const val = e.target.value;
                 if (onlyPositiveNumbers(val) || val === "") setForm({ ...form, presupuesto_aprox: val });
@@ -348,14 +339,14 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             />
           </label>
 
-          {/* 6) Saldo a abonar (NUEVO) */}
+          {/* 6) Saldo a abonar */}
           <label>
             Saldo a abonar (Q):
             <input
               type="text"
               name="saldo_a_abonar"
               value={form.saldo_a_abonar}
-              disabled={isReadOnly}
+              disabled={isLocked}
               onChange={(e) => {
                 const val = e.target.value;
                 if (onlyPositiveNumbers(val) || val === "") setForm({ ...form, saldo_a_abonar: val });
@@ -370,9 +361,9 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             <select
               name="cliente"
               value={form.cliente}
-              disabled={isReadOnly}
+              disabled={isLocked}
               onChange={(e) => setForm({ ...form, cliente: e.target.value })}
-              title={isReadOnly ? "Solo lectura para clientes" : undefined}
+              title={isLocked ? "Solo lectura" : undefined}
             >
               <option value="">-- Seleccione --</option>
               {usuarios.clientes.length > 0 ? (
@@ -391,9 +382,9 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             <select
               name="responsable"
               value={form.responsable}
-              disabled={isReadOnly}
+              disabled={isLocked}
               onChange={(e) => setForm({ ...form, responsable: e.target.value })}
-              title={isReadOnly ? "Solo lectura para clientes" : undefined}
+              title={isLocked ? "Solo lectura" : undefined}
             >
               <option value="">-- Seleccione --</option>
               {usuarios.responsables.length > 0 ? (
@@ -415,11 +406,13 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
               <ul>
                 {documentos.map((doc) => (
                   <li key={doc.public_id}>
-                    <a href={doc.url_firmada || doc.url} target="_blank" rel="noopener noreferrer">
+                    {/* abrir (inline para imágenes/videos y PDF) */}
+                    <a href={buildArchivoUrl(doc, false)} target="_blank" rel="noopener noreferrer">
                       {doc.nombre}
                     </a>
+                    {/* descargar */}
                     <a
-                      href={(doc.url_firmada || doc.url) + "?download=true"}
+                      href={buildArchivoUrl(doc, true)}
                       title="Descargar"
                       className="download-link"
                     >
@@ -433,8 +426,8 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             )}
           </div>
 
-          {/* Botón Cargar: oculto si solo lectura */}
-          {!isReadOnly && (
+          {/* Botón Cargar: oculto si bloqueado */}
+          {!isLocked && (
             <button
               type="button"
               onClick={handleUploadClick}
@@ -447,8 +440,8 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
         </div>
 
         <div className="form-actions-btn">
-          {/* Botón Actualizar: oculto si solo lectura */}
-          {!isReadOnly && (
+          {/* Botón Actualizar: oculto si bloqueado */}
+          {!isLocked && (
             <button type="submit" className="btn-guardar">
               Actualizar
             </button>

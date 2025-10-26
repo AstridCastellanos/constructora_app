@@ -133,6 +133,15 @@ export default function ChatWindow({ project, onBack }) {
       .catch((err) => console.error("Error al obtener mensajes:", err));
   }, [project]);
 
+  // Cuando regresamos desde detalles a la vista de chat, forzar scroll al final
+  useEffect(() => {
+    if (!mostrarDetalles) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => scrollToBottom({ instant: true }));
+      });
+    }
+  }, [mostrarDetalles]);
+
   // Función para obtener iniciales
   const getInitials = (nombreCompleto) => {
     if (!nombreCompleto) return "U";
@@ -236,7 +245,6 @@ export default function ChatWindow({ project, onBack }) {
     const qs = `rt=${rt}${download ? "&download=true" : ""}`;
     return `${base}?${qs}`;
   };
-
 
   return (
     <div className="cw">
@@ -450,9 +458,7 @@ export default function ChatWindow({ project, onBack }) {
             onChange={(e) => setFile(e.target.files[0])}
           />
           <input
-            placeholder={
-              file ? `Archivo listo: ${file.name}` : "Escribe un mensaje"
-            }
+            placeholder={"Escribe un mensaje"}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />

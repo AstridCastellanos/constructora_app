@@ -1,14 +1,13 @@
 /* Fondo oscuro bloqueante */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;                 /* equivale a top/right/bottom/left: 0 */
+  z-index: 10000;           /* por encima de casi todo, incluido el sidebar */
   background-color: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  padding: 16px;            /* margen para pantallas pequeñas */
 }
 
 /* Caja del mensaje */
@@ -17,10 +16,12 @@
   border-radius: 14px;
   padding: 28px 36px;
   width: 420px;
+  max-width: 100%;
   text-align: center;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   animation: aparecer 0.25s ease-in-out;
 }
+
 
 /* Animación de entrada */
 @keyframes aparecer {

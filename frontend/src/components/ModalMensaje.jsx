@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import "../styles/ModalMensaje.css";
 
 export default function ModalMensaje({
@@ -14,8 +15,17 @@ export default function ModalMensaje({
 }) {
   if (!visible) return null;
 
-  return (
-    <div className="modal-overlay">
+  // Bloquear scroll del body mientras el modal está abierto
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
+  const content = (
+    <div className="modal-overlay" role="dialog" aria-modal="true">
       <div className={`modal-contenedor ${tipo}`}>
         <h3 className="modal-titulo">{titulo}</h3>
         <p className="modal-mensaje">{mensaje}</p>
@@ -33,4 +43,7 @@ export default function ModalMensaje({
       </div>
     </div>
   );
+
+  // Renderiza fuera de cualquier stacking context del layout
+  return createPortal(content, document.body);
 }
