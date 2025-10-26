@@ -11,7 +11,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
   // Solo lectura si es cliente y NO es titular ni colaborador
   const isReadOnly = roles.includes("cliente") && !roles.some(r => r === "titular" || r === "colaborador");
 
-  // Bloqueo por estado Finalizado
+  // Form local
   const [form, setForm] = useState({
     descripcion: "",
     estado: "En Curso",
@@ -23,8 +23,12 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     responsable: "",
   });
 
-  const isFinalizado = (proyecto?.estado || form.estado) === "Finalizado";
-  const isLocked = isReadOnly || isFinalizado;
+  // Estado persistido en BD (clave para bloquear inmediatamente tras guardar)
+  const [estadoPersistido, setEstadoPersistido] = useState(proyecto?.estado || "En Curso");
+
+  // Se considera cerrado si está Finalizado o Cancelado
+  const isCerrado = ["Finalizado", "Cancelado"].includes(estadoPersistido);
+  const isLocked = isReadOnly || isCerrado;
 
   const [usuarios, setUsuarios] = useState({ clientes: [], responsables: [] });
   const [documentos, setDocumentos] = useState([]);
@@ -65,7 +69,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       .catch((err) => console.error("Error al cargar usuarios:", err));
   }, []);
 
-  // ==== NUEVO: helpers para links centralizados ====
+  // ==== helpers para links centralizados ====
   const rtForDoc = (doc) => {
     if (doc?.resource_type) return doc.resource_type; // "image" | "video" | "raw"
     const f = String(doc?.formato || "").toLowerCase();
@@ -79,7 +83,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     const base = `http://localhost:4000/api/mensajes/archivo/${encodeURIComponent(doc.public_id)}`;
     return `${base}?rt=${rt}${download ? "&download=true" : ""}`;
   };
-  // =================================================
+  // ===========================================
 
   // Cargar documentos (adjuntos del chat + docs del proyecto)
   const loadDocumentos = useCallback(async (proyectoId) => {
@@ -138,6 +142,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       responsable: responsableObj?.usuario_id?._id || "",
     }));
 
+    setEstadoPersistido(proyecto.estado || "En Curso"); // <- sincroniza bloqueo
     loadDocumentos(proyecto._id);
   }, [proyecto, loadDocumentos]);
 
@@ -186,7 +191,17 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
           saldo_a_abonar: "",
           saldo_abonado: data?.saldo_abonado != null ? String(data.saldo_abonado) : s.saldo_abonado,
         }));
-        mostrarModal({ titulo: "Proyecto actualizado", mensaje: "Los datos se enviaron correctamente.", tipo: "success", onAceptar: cerrarModal });
+
+        // 🔒 Bloquear inmediatamente si cambió a Finalizado/Cancelado
+        const nuevoEstado = data?.estado || form.estado;
+        setEstadoPersistido(nuevoEstado);
+
+        mostrarModal({
+          titulo: "Proyecto actualizado",
+          mensaje: "Los datos se enviaron correctamente.",
+          tipo: "success",
+          onAceptar: cerrarModal
+        });
       } else {
         mostrarModal({ titulo: "Error", mensaje: data?.mensaje || "No se pudo actualizar el proyecto.", tipo: "error", onAceptar: cerrarModal });
       }
@@ -233,7 +248,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
 
   return (
     <div className={`proyecto-detalles ${modo === "page" ? "modo-page" : "modo-chat"}`}>
-      {/* ENCABEZADO: usa el título del caso */}
+      {/* Encabezado */}
       <header className="p-header detalles-header">
         {modo === "chat" ? (
           <>
@@ -252,27 +267,16 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
         )}
       </header>
 
-      {/* Aviso de bloqueo por estado Finalizado */}
-      {isFinalizado && (
-        <div
-          style={{
-            margin: "6px 0 0",
-            padding: "10px 12px",
-            borderRadius: "8px",
-            background: "#fff7ed",
-            border: "1px solid #fed7aa",
-            color: "#7c2d12",
-            fontSize: "14px",
-          }}
-        >
-          Este proyecto está finalizado. La edición de campos y carga de documentos está bloqueada.
+      {/* Aviso de bloqueo por estado Finalizado / Cancelado */}
+      {isCerrado && (
+        <div className="alert-locked">
+          Este proyecto está {estadoPersistido.toLowerCase()}. La edición de campos y carga de documentos está bloqueada.
         </div>
       )}
 
-      {/* FORMULARIO: orden nuevo */}
+      {/* Formulario */}
       <form className="form-proyecto" onSubmit={handleUpdate}>
         <div className="form-grid">
-          {/* 1) Descripción */}
           <label>
             Descripción:
             <textarea
@@ -283,7 +287,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             ></textarea>
           </label>
 
-          {/* 2) Estado */}
           <label>
             Estado:
             <select
@@ -300,7 +303,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             </select>
           </label>
 
-          {/* 3) Dirección */}
           <label>
             Dirección:
             <input
@@ -312,7 +314,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             />
           </label>
 
-          {/* 4) Presupuesto Aproximado */}
           <label>
             Presupuesto Aproximado (Q):
             <input
@@ -327,7 +328,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             />
           </label>
 
-          {/* 5) Saldo Abonado (SIEMPRE SOLO LECTURA) */}
           <label>
             Saldo Abonado (Q):
             <input
@@ -339,7 +339,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             />
           </label>
 
-          {/* 6) Saldo a abonar */}
           <label>
             Saldo a abonar (Q):
             <input
@@ -355,7 +354,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             />
           </label>
 
-          {/* 7) Cliente */}
           <label>
             Cliente:
             <select
@@ -376,7 +374,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             </select>
           </label>
 
-          {/* 8) Responsable */}
           <label>
             Responsable:
             <select
@@ -398,7 +395,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
           </label>
         </div>
 
-        {/* DOCUMENTOS */}
         <div className="documentos-section">
           <h3>Documentos Adjuntos</h3>
           <div className="documentos-container">
@@ -406,11 +402,9 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
               <ul>
                 {documentos.map((doc) => (
                   <li key={doc.public_id}>
-                    {/* abrir (inline para imágenes/videos y PDF) */}
                     <a href={buildArchivoUrl(doc, false)} target="_blank" rel="noopener noreferrer">
                       {doc.nombre}
                     </a>
-                    {/* descargar */}
                     <a
                       href={buildArchivoUrl(doc, true)}
                       title="Descargar"
@@ -426,7 +420,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
             )}
           </div>
 
-          {/* Botón Cargar: oculto si bloqueado */}
           {!isLocked && (
             <button
               type="button"
@@ -440,7 +433,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
         </div>
 
         <div className="form-actions-btn">
-          {/* Botón Actualizar: oculto si bloqueado */}
           {!isLocked && (
             <button type="submit" className="btn-guardar">
               Actualizar

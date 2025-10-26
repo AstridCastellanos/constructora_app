@@ -241,3 +241,13 @@
   color: var(--blue);
 }
 
+/* Aviso de bloqueo Finalizado/Cancelado */
+.alert-locked {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #7c2d12;
+  font-size: 14px;
+}
