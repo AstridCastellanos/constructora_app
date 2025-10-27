@@ -71,3 +71,134 @@
 .sb-active svg {
   color: var(--accent);
 }
+
+
+/* Badge redondo en esquina superior derecha del botón */
+.sb-btn {
+  position: relative;
+}
+.sb-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  color: #fff;
+  background: #ef4444; /* rojo por defecto */
+  pointer-events: none;
+}
+.sb-badge--red { background: #ef4444; }  /* notificaciones */
+
+/* Popover */
+.sb-popover {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header fijo */
+.sb-popover__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  font-weight: 600;
+  border-bottom: 1px solid #f1f5f9;
+  height: 48px; /* Altura fija del header */
+}
+
+/* Botón de cierre */
+.sb-popover__iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+}
+.sb-popover__iconbtn:hover {
+  background: #f3f4f6;
+  cursor: pointer;
+}
+
+/* Cuerpo con scroll interno */
+.sb-popover__body {
+  overflow-y: auto; /* Scroll solo vertical */
+  flex: 1;          /* Toma el espacio restante */
+  padding: 8px;     /* Espaciado interno */
+}
+
+/* Lista y elementos de la lista */
+.sb-popover__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sb-popover__item {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.sb-popover__item:last-child {
+  border-bottom: none;
+}
+.sb-popover__title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #111827;
+}
+.sb-popover__msg {
+  font-size: 13px;
+  color: #374151;
+}
+.sb-popover__meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #9ca3af;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.sb-popover__link {
+  color: #2563eb;
+  text-decoration: none;
+}
+.sb-popover__link:hover {
+  text-decoration: underline;
+}
+
+/* Footer fijo */
+.sb-popover__footer {
+  padding: 8px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 44px; /* Altura fija del footer */
+}
+
+/* Botón limpiar todo */
+.sb-popover__clear {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: #b91c1c;
+  font-size: 13px;
+  cursor: pointer;
+}
+.sb-popover__clear:hover {
+  text-decoration: underline;
+}

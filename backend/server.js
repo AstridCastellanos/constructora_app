@@ -6,6 +6,9 @@ const cors = require("cors");
 const mongoSanitize = require("express-mongo-sanitize");
 require("dotenv").config();
 
+// holder de io para usarlo en helpers/controladores
+const { setIO } = require("./utils/io");
+
 // Importar rutas
 const usuarioRoutes = require("./routes/usuarioRoutes");
 const proyectoRoutes = require("./routes/proyectoRoutes");
@@ -43,7 +46,10 @@ mongoose
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] },
-}); 
+});
+
+// registra io global y conserva el set en app (por compatibilidad)
+setIO(io);
 app.set("io", io);
 
 // Rutas
@@ -61,6 +67,15 @@ app.use("/api/solicitudes", solicitudesRoutes);
 io.on("connection", (socket) => {
   console.log("🟢 Cliente conectado:", socket.id);
 
+  // join por usuario para notificaciones dirigidas
+  socket.on("notifications:join", ({ userId }) => {
+    if (userId) {
+      socket.join(`user:${userId}`);
+      // opcional: console.log(`Socket ${socket.id} joined room user:${userId}`);
+    }
+  });
+
+  // Chat (sin cambios): sigue emitiendo a todos
   socket.on("nuevo-mensaje", (msg) => {
     io.emit("mensaje-actualizado", msg);
   });
