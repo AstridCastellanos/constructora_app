@@ -1,13 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { X, Trash2 } from "lucide-react";
-import { io } from "socket.io-client";
+import { getSocket, joinUserRoom } from "../utils/socketClient";
 
-const API = "http://localhost:4000";
+const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default function NotificationsPopover({ open, onClose, anchorRef, usuario }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const socketRef = useRef(null);
 
   const fetchList = async () => {
     const token = localStorage.getItem("token");
@@ -17,13 +16,9 @@ export default function NotificationsPopover({ open, onClose, anchorRef, usuario
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-
-      // Normaliza por si en algún momento cambias el shape
       const arr = Array.isArray(data)
         ? data
         : (data?.items || data?.notificaciones || data?.results || data?.rows || data?.docs || []);
-
-      // Orden defensivo (desc)
       arr.sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
       setItems(arr);
     } catch {
@@ -40,54 +35,37 @@ export default function NotificationsPopover({ open, onClose, anchorRef, usuario
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return; // si falla, no limpies UI
+      if (!res.ok) return;
       setItems([]);
-      // 🔔 Avisa al Sidebar para refrescar el badge
       window.dispatchEvent(new Event("notifs:refresh"));
-    } catch {/* noop */}
+    } catch {}
   };
 
-  // Conectar socket solo cuando se abre
   useEffect(() => {
     if (!open) return;
-
-    // 1) Carga inicial (sin depender de _id)
     fetchList();
 
-    // 2) Socket para tiempo real
-    const s = io(API, { transports: ["websocket"] });
-    socketRef.current = s;
+    const s = getSocket();
+    joinUserRoom(usuario);
 
-    s.on("connect", () => {
-      const userId = usuario?._id || usuario?.id;
-      if (userId) s.emit("notifications:join", { userId });
-    });
-
-    s.on("notificaciones:nueva", () => {
-      // Refrescar lista y badge
+    const handleNew = () => {
       fetchList();
       window.dispatchEvent(new Event("notifs:refresh"));
-    });
-
-    return () => {
-      s.disconnect();
     };
+
+    s.on("notificaciones:nueva", handleNew);
+    return () => s.off("notificaciones:nueva", handleNew);
   }, [open, usuario]);
 
-  // Posicionamiento + altura dinámica para que el popover no se salga
-  const pos = useMemo(() => {
+  const pos = React.useMemo(() => {
     if (!anchorRef?.current) return { style: {}, bodyMaxH: 0 };
     const rect = anchorRef.current.getBoundingClientRect();
-    const margin = 10;                         // separación respecto al botón
-    const width = 360;                         // ancho del popover
-    const top = Math.max(8, rect.top + 6);     // evita pegarse arriba
+    const margin = 10;
+    const width = 360;
+    const top = Math.max(8, rect.top + 6);
     const left = rect.right + margin;
-
-    // Altura disponible desde top hasta borde inferior de la ventana
-    const available = Math.max(220, window.innerHeight - top - 8); // mínimo 220px
-    // Restamos header (48px) y footer (44px) para que el body haga scroll
+    const available = Math.max(220, window.innerHeight - top - 8);
     const bodyMaxH = Math.max(120, available - (48 + 44));
-
     return { style: { position: "fixed", top, left, zIndex: 60, width }, bodyMaxH };
   }, [anchorRef?.current, open]);
 
@@ -95,7 +73,6 @@ export default function NotificationsPopover({ open, onClose, anchorRef, usuario
 
   return (
     <div className="sb-popover" style={pos.style}>
-      {/* Header fijo */}
       <div className="sb-popover__header">
         <span>Notificaciones</span>
         <button className="sb-popover__iconbtn" onClick={onClose} title="Cerrar">
@@ -103,7 +80,6 @@ export default function NotificationsPopover({ open, onClose, anchorRef, usuario
         </button>
       </div>
 
-      {/* Body con scroll interno */}
       <div className="sb-popover__body" style={{ maxHeight: pos.bodyMaxH }}>
         {loading && <div className="sb-popover__empty">Cargando…</div>}
 
@@ -119,11 +95,6 @@ export default function NotificationsPopover({ open, onClose, anchorRef, usuario
                 <div className="sb-popover__msg">{n.mensaje}</div>
                 <div className="sb-popover__meta">
                   {new Date(n.fecha_creacion).toLocaleString()}
-                  {n.id_proyecto && (
-                    <a href={`/proyectos/${n.id_proyecto}`} className="sb-popover__link">
-                      Ir al proyecto
-                    </a>
-                  )}
                 </div>
               </li>
             ))}
@@ -131,7 +102,6 @@ export default function NotificationsPopover({ open, onClose, anchorRef, usuario
         )}
       </div>
 
-      {/* Footer fijo */}
       <div className="sb-popover__footer">
         <button className="sb-popover__clear" onClick={clearAll} title="Eliminar todas">
           <Trash2 size={16} /> Limpiar todo

@@ -8,7 +8,7 @@ import Toast from "./Toast";
 import "../styles/Sidebar.css";
 import { AuthContext } from "../context/AuthContext";
 import NotificationsPopover from "./NotificationsPopover";
-import { io } from "socket.io-client";
+import { getSocket, joinUserRoom } from "../utils/socketClient";
 
 const API = "http://localhost:4000";
 
@@ -22,7 +22,6 @@ export default function Sidebar() {
   const [openNotif, setOpenNotif] = useState(false);
   const [counts, setCounts] = useState({ total: 0, chat: 0, aprobaciones: 0 });
   const notifBtnRef = useRef(null);
-  const socketRef = useRef(null);
 
   const puedeVer = (vista) => {
     if (roles.includes("titular")) return true;
@@ -56,7 +55,7 @@ export default function Sidebar() {
     }
   };
 
-  // Polling liviano
+  // Polling liviano (respaldo)
   useEffect(() => {
     if (!puedeVer("notificaciones")) return;
     loadCounts();
@@ -65,32 +64,27 @@ export default function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario && usuario._id, roles.join(",")]);
 
-  // Escuchar eventos globales disparados por el popover (clear / socket en popover)
+  // Escucha evento global para refrescar badge (lo dispara el popover)
   useEffect(() => {
     const onRefresh = () => loadCounts();
     window.addEventListener("notifs:refresh", onRefresh);
     return () => window.removeEventListener("notifs:refresh", onRefresh);
   }, []);
 
-  // Socket en Sidebar para actualizar badge en tiempo real (independiente del popover)
+  // Socket en Sidebar para actualizar badge en tiempo real (sin desconectar)
   useEffect(() => {
     if (!puedeVer("notificaciones")) return;
     if (!usuario) return;
 
-    const s = io(API, { transports: ["websocket"] });
-    socketRef.current = s;
+    const s = getSocket();
+    joinUserRoom(usuario);
 
-    s.on("connect", () => {
-      const userId = usuario._id || usuario.id;
-      if (userId) s.emit("notifications:join", { userId });
-    });
+    const handleNew = () => loadCounts();
+    s.on("notificaciones:nueva", handleNew);
 
-    s.on("notificaciones:nueva", () => {
-      loadCounts();
-    });
-
+    // Limpieza: quitar listener (NO s.disconnect())
     return () => {
-      s.disconnect();
+      s.off("notificaciones:nueva", handleNew);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario && (usuario._id || usuario.id), roles.join(",")]);

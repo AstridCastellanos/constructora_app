@@ -31,29 +31,53 @@ async function crearMensaje(req, res) {
 
     // === Notificaciones: a todos los participantes excepto el autor (incluye clientes) ===
     const participantes = await participantesProyecto(guardado.id_proyecto);
-    const autorId = String(guardado.autor_id);
-    const destinatarios = participantes.filter((uid) => String(uid) !== autorId);
 
-    const titulo = "Nuevo mensaje de chat";
-    const preview =
-      guardado.contenido && guardado.contenido.trim()
-        ? guardado.contenido.slice(0, 120)
-        : "Mensaje con adjuntos";
+    // Normaliza el autor a string de forma segura
+    const autorIdStr =
+      (guardado.autor_id && typeof guardado.autor_id.toString === "function")
+        ? guardado.autor_id.toString()
+        : String(guardado.autor_id);
+
+    // De-dup + exclusión del autor (manteniendo los valores originales para pasar al helper)
+    const vistos = new Set();
+    const destinatarios = [];
+    for (const uid of participantes || []) {
+      const uidStr = (uid && typeof uid.toString === "function") ? uid.toString() : String(uid);
+      if (uidStr === autorIdStr) continue;      // no notificar al autor
+      if (vistos.has(uidStr)) continue;         // evitar duplicados
+      vistos.add(uidStr);
+      destinatarios.push(uid);                  
+    }
+
+    // Obtener nombre del proyecto para el título (como acordamos)
+    const Proyecto = require("../models/Proyecto");
+    const proyecto = await Proyecto.findById(guardado.id_proyecto).select("nombre");
+
+    const titulo = proyecto?.nombre
+      ? `Nuevo mensaje en ${proyecto.nombre}`
+      : "Nuevo mensaje en el proyecto";
+
+    // Cuerpo: "usuario_sistema: contenido"
+    const autorUser = mensajeConAutor?.autor_id?.usuario_sistema; // obligatorio en tu schema
+    const contenidoBase = (guardado.contenido && guardado.contenido.trim())
+      ? guardado.contenido.trim().slice(0, 120)
+      : "Mensaje con adjuntos";
+    const preview = `${autorUser}: ${contenidoBase}`;
 
     await Promise.all(
       destinatarios.map((uid) =>
-        crearNotificacion({
-          id_usuario: uid,
-          id_proyecto: guardado.id_proyecto,
-          tipo: "chat_mensaje",
-          titulo,
-          mensaje: preview,
-        })
+        // Doble defensa por si acaso
+        ( (uid && (uid.toString ? uid.toString() : String(uid)) ) !== autorIdStr )
+          ? crearNotificacion({
+              id_usuario: uid,
+              id_proyecto: guardado.id_proyecto,
+              tipo: "chat_mensaje",
+              titulo,
+              mensaje: preview,
+            })
+          : null
       )
     );
-
-    // (Opcional: si usas sockets para el badge en tiempo real)
-    // destinatarios.forEach(uid => req.io?.to(`notifications:${uid}`).emit('notifications:new'));
 
     return res.status(201).json(mensajeConAutor);
   } catch (error) {

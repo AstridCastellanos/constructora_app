@@ -88,9 +88,33 @@
   font-weight: 600;
 }
 
+/* fila de nombre + badge */
+.cl-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* badge de mensajes no leídos por chat */
+.cl-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  color: #fff;
+  background: #ef4444; /* rojo */
+}
+
+/* asegúrate de que el título no se empuje raro */
 .cl-name {
-  font-size: 15px;
-  color: var(--text-dark);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Header de ChatList: título a la izquierda y botón salir a la derecha */

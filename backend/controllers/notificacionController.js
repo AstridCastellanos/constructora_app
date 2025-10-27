@@ -126,9 +126,10 @@ async function marcarTodasLeidasYEliminar(req, res) {
     const userId = req.usuario?._id || req.user?.id || req.user?._id;
     if (!userId) return res.status(401).json({ mensaje: "No autenticado" });
 
-    const { tipo } = req.body || {};
+    const { tipo, id_proyecto } = req.body || {};
     const filtro = { id_usuario: userId };
     if (tipo) filtro.tipo = tipo;
+    if (id_proyecto) filtro.id_proyecto = id_proyecto;
 
     const r = await Notificacion.deleteMany(filtro);
     return res.json({ ok: true, deletedCount: r?.deletedCount || 0 });

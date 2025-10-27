@@ -3,38 +3,112 @@ import { Search, SlidersHorizontal, LogOut } from "lucide-react";
 import "../styles/ChatList.css";
 import { AuthContext } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { getSocket, joinUserRoom } from "../utils/socketClient";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 export default function ChatList({ onSelect, selected }) {
   const [proyectos, setProyectos] = useState([]);
   const [filtro, setFiltro] = useState("");
 
-  // Nuevo: para mostrar/ocultar el panel de filtros
+  // Filtros
   const [showFilters, setShowFilters] = useState(false);
-  const [filtroEstado, setFiltroEstado] = useState("En Curso"); // En Curso | Finalizado | Pausado | Cancelado | ""
-  const [ordenNombre, setOrdenNombre] = useState("asc"); // asc | desc
+  const [filtroEstado, setFiltroEstado] = useState("En Curso");
+  const [ordenNombre, setOrdenNombre] = useState("asc");
 
-  const { logout } = useContext(AuthContext);
+  // Badges por proyecto (id -> count)
+  const [badges, setBadges] = useState({});
+
+  const { logout, usuario } = useContext(AuthContext);
   const isMobile = useIsMobile();
 
-  // Cargar proyectos del backend (ya filtrará por rol con scope=chat del lado del server)
+  // Cargar proyectos (scope=chat)
+  const loadProjects = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API}/api/proyectos?scope=chat`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.status === 403 ? [] : await res.json();
+      setProyectos(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error al obtener proyectos:", err);
+    }
+  };
+
+  // Cargar badges: agrupa notificaciones chat_mensaje por id_proyecto
+  const loadChatBadges = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API}/api/notificaciones?limit=200`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const arr = Array.isArray(data)
+        ? data
+        : (data?.items || data?.notificaciones || data?.results || data?.rows || data?.docs || []);
+
+      const map = {};
+      for (const n of arr) {
+        if (n.tipo !== "chat_mensaje") continue;
+        const pid = n.id_proyecto && (n.id_proyecto._id || n.id_proyecto);
+        if (!pid) continue;
+        map[pid] = (map[pid] || 0) + 1;
+      }
+      setBadges(map);
+    } catch (err) {
+      console.error("Error al cargar badges de chat:", err);
+      setBadges({});
+    }
+  };
+
+  // Limpiar notificaciones de chat para un proyecto
+  const clearProjectChatNotifs = async (projectId) => {
+    // Optimista: baja a 0 de inmediato
+    setBadges((prev) => ({ ...prev, [projectId]: 0 }));
+    window.dispatchEvent(new Event("notifs:refresh")); // refresca badge global
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API}/api/notificaciones/read-all`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ tipo: "chat_mensaje", id_proyecto: projectId }),
+      });
+      if (!res.ok) {
+        // Si falla, recargamos los badges reales para no quedar desincronizados
+        await loadChatBadges();
+      }
+    } catch (err) {
+      console.error("Error al limpiar notificaciones del proyecto:", err);
+      await loadChatBadges();
+    }
+  };
+
+  // Mount: proyectos + badges
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("http://localhost:4000/api/proyectos?scope=chat", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => {
-        if (res.status === 403) return [];
-        return res.json();
-      })
-      .then((data) => setProyectos(Array.isArray(data) ? data : []))
-      .catch((err) => console.error("Error al obtener proyectos:", err));
+    loadProjects();
+    loadChatBadges();
+    const id = setInterval(loadChatBadges, 30000);
+    return () => clearInterval(id);
   }, []);
 
-  // Filtrado por texto + estado
+  // Socket realtime: refrescar badges cuando llegue una notificación
+  useEffect(() => {
+    if (!usuario) return;
+    const s = getSocket();
+    joinUserRoom(usuario);
+    const handleNew = () => loadChatBadges();
+    s.on("notificaciones:nueva", handleNew);
+    return () => s.off("notificaciones:nueva", handleNew);
+  }, [usuario]);
+
+  // Filtrado por texto + estado + orden
   const proyectosFiltrados = proyectos
-    .filter((p) =>
-      p.nombre?.toLowerCase().includes(filtro.toLowerCase())
-    )
+    .filter((p) => p.nombre?.toLowerCase().includes(filtro.toLowerCase()))
     .filter((p) => (filtroEstado ? p.estado === filtroEstado : true))
     .sort((a, b) => {
       const an = (a.nombre || "").toLowerCase();
@@ -46,13 +120,13 @@ export default function ChatList({ onSelect, selected }) {
 
   return (
     <div className="cl">
-      {/* Header: título a la izquierda y botón salir a la derecha (solo móvil) */}
+      {/* Header */}
       <div className="cl-header">
         <div className="cl-title">Constructora P.S</div>
 
         {isMobile && (
           <button
-            className="sb-btn"        // mismo estilo que Sidebar
+            className="sb-btn"
             title="Salir"
             onClick={logout}
             aria-label="Salir"
@@ -62,7 +136,7 @@ export default function ChatList({ onSelect, selected }) {
         )}
       </div>
 
-      {/* Barra de búsqueda + botón de filtros (lo de filtros NO se movió) */}
+      {/* Search + filtros */}
       <div className="cl-search">
         <button className="cl-search" title="Buscar" aria-hidden>
           <Search />
@@ -76,7 +150,7 @@ export default function ChatList({ onSelect, selected }) {
         <button
           className="cl-filter"
           title="Filtros"
-          onClick={() => setShowFilters((s) => !s)} // ahora sí abre/cierra el panel
+          onClick={() => setShowFilters((s) => !s)}
           aria-expanded={showFilters}
           aria-controls="cl-filters"
         >
@@ -84,7 +158,6 @@ export default function ChatList({ onSelect, selected }) {
         </button>
       </div>
 
-      {/* Panel de filtros: Estado + Orden por nombre */}
       {showFilters && (
         <div className="cl-filters" id="cl-filters">
           <label className="cl-filter-field">
@@ -124,16 +197,23 @@ export default function ChatList({ onSelect, selected }) {
               .map((w) => w[0])
               .join("");
             const isSel = selected && selected._id === p._id;
+            const badge = badges[p._id] || 0;
 
             return (
               <button
                 key={p._id}
                 className={`cl-item ${isSel ? "cl-item--active" : ""}`}
-                onClick={() => onSelect(p)}
+                onClick={() => {
+                  onSelect(p);
+                  clearProjectChatNotifs(p._id);
+                }}
               >
                 <div className="cl-avatar">{initials}</div>
                 <div className="cl-info">
-                  <div className="cl-name">{p.nombre}</div>
+                  <div className="cl-name-row">
+                    <div className="cl-name">{p.nombre}</div>
+                    {badge > 0 && <span className="cl-badge">{badge}</span>}
+                  </div>
                   {p.estado && <div className="cl-meta">{p.estado}</div>}
                 </div>
               </button>

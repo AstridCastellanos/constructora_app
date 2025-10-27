@@ -6,7 +6,7 @@ import {
   Download,
   ChevronDown,
   FileText,
-  X, // se usa para quitar adjunto en la pastilla
+  X, 
 } from "lucide-react";
 import ProyectoDetalles from "./ProyectoDetalles";
 import "../styles/ChatWindow.css";
