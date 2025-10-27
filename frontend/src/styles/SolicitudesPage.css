@@ -1,0 +1,48 @@
+/* Reutiliza layout de ProyectosPage: layout, proyectos-col, p-header, p-table */
+
+/* Filtros */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filters select, .filters button {
+  padding: 6px 10px;
+  border: 1px solid #eaeaea;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* Estados (badges) */
+.badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+  display: inline-block;
+}
+.badge-pending { background: #fff7ed; color: #9a3412; }
+.badge-approved { background: #ecfdf5; color: #065f46; }
+.badge-rejected { background: #fef2f2; color: #991b1b; }
+.badge-conflict { background: #fffbeb; color: #92400e; }
+.badge-cancelled { background: #f3f4f6; color: #374151; }
+
+/* Acciones (alineadas a la derecha como en tus tablas) */
+.table-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+.btn {
+  padding: 6px 10px;
+  border: 1px solid #eaeaea;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn + .btn { margin-left: 6px; }
+
+.btn-approve { border-color: #d1fae5; }
+.btn-reject  { border-color: #fee2e2; }
+.btn-cancel  { border-color: #e5e7eb; }

@@ -3,10 +3,12 @@ import Login from "./Login";
 import ProyectosPage from "./pages/ProyectosPage";
 import ChatPage from "./pages/ChatPage";
 import UsuariosPage from "./pages/UsuariosPage";
-import ProyectoForm from "./components/ProyectoForm"; 
+import ProyectoForm from "./components/ProyectoForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProyectoDetallesPage from "./pages/ProyectoDetallesPage";
 import "./styles/Chat.css";
+import SolicitudesPage from "./pages/SolicitudesPage";
+
 
 function App() {
   return (
@@ -60,6 +62,16 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["administrador", "titular", "colaborador"]}>
               <ProyectoDetallesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Solicitudes (solo titulares y colaboradores) */}
+        <Route
+          path="/solicitudes"
+          element={
+            <ProtectedRoute allowedRoles={["titular", "colaborador"]}>
+              <SolicitudesPage />
             </ProtectedRoute>
           }
         />

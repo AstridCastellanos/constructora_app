@@ -1,5 +1,10 @@
+// controllers/mensajeController.js
 const Mensaje = require("../models/Mensaje");
 const cloudinary = require("../config/cloudinary.js").default;
+
+// Helpers de notificaciones
+const { crearNotificacion } = require("./notificacionController");
+const { participantesProyecto } = require("./_notif.helpers");
 
 // Deducción de resource_type
 function deduceResourceType(publicId) {
@@ -20,11 +25,40 @@ async function crearMensaje(req, res) {
   try {
     const nuevoMensaje = new Mensaje(req.body);
     const guardado = await nuevoMensaje.save();
+
+    // importante: devolver el mensaje con datos de autor como antes
     const mensajeConAutor = await guardado.populate("autor_id", "nombres usuario_sistema");
+
+    // === Notificaciones: a todos los participantes excepto el autor (incluye clientes) ===
+    const participantes = await participantesProyecto(guardado.id_proyecto);
+    const autorId = String(guardado.autor_id);
+    const destinatarios = participantes.filter((uid) => String(uid) !== autorId);
+
+    const titulo = "Nuevo mensaje de chat";
+    const preview =
+      guardado.contenido && guardado.contenido.trim()
+        ? guardado.contenido.slice(0, 120)
+        : "Mensaje con adjuntos";
+
+    await Promise.all(
+      destinatarios.map((uid) =>
+        crearNotificacion({
+          id_usuario: uid,
+          id_proyecto: guardado.id_proyecto,
+          tipo: "chat_mensaje",
+          titulo,
+          mensaje: preview,
+        })
+      )
+    );
+
+    // (Opcional: si usas sockets para el badge en tiempo real)
+    // destinatarios.forEach(uid => req.io?.to(`notifications:${uid}`).emit('notifications:new'));
+
     return res.status(201).json(mensajeConAutor);
   } catch (error) {
     console.error("Error al crear mensaje:", error);
-    return res.status(400).json({ mensaje: "Error al crear mensaje", error });
+    return res.status(400).json({ mensaje: "Error al crear mensaje", error: error.message || error });
   }
 }
 

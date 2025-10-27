@@ -20,7 +20,7 @@ export default function Sidebar() {
 
   const handleLogout = () => {
     logout();
-    setToast({ msg: "Sesión cerrada correctamente 👋", type: "success" });
+    setToast({ msg: "Sesión cerrada correctamente", type: "success" });
 
     setTimeout(() => {
       setToast(null);
@@ -38,6 +38,7 @@ export default function Sidebar() {
     if (vista === "proyectos" && roles.includes("colaborador")) return true;
     if (vista === "chat" && (roles.includes("colaborador") || roles.includes("cliente"))) return true;
     if (vista === "ajustes" && roles.includes("administrador")) return true;
+    if (vista === "solicitudes" && (roles.includes("titular") || roles.includes("colaborador"))) return true;
     return false;
   };
 
@@ -66,11 +67,11 @@ export default function Sidebar() {
           </button>
         )}
 
-        {puedeVer("tareas") && (
+        {puedeVer("solicitudes") && (
           <button
-            className={`sb-btn ${location.pathname === "/tareas" ? "sb-active" : ""}`}
-            title="Tareas"
-            onClick={() => navigate("/tareas")}
+            className={`sb-btn ${location.pathname === "/solicitudes" ? "sb-active" : ""}`}
+            title="Solicitudes"
+            onClick={() => navigate("/solicitudes")}
           >
             <CheckSquare />
           </button>

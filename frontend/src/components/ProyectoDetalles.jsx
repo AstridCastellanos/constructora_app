@@ -28,7 +28,11 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
 
   // Se considera cerrado si está Finalizado o Cancelado
   const isCerrado = ["Finalizado", "Cancelado"].includes(estadoPersistido);
-  const isLocked = isReadOnly || isCerrado;
+
+  // Bloqueo por solicitud pendiente de cambio de estado
+  const [bloqueoCambioEstado, setBloqueoCambioEstado] = useState(false);
+
+  const isLocked = isReadOnly || isCerrado || bloqueoCambioEstado;
 
   const [usuarios, setUsuarios] = useState({ clientes: [], responsables: [] });
   const [documentos, setDocumentos] = useState([]);
@@ -85,6 +89,53 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
   };
   // ===========================================
 
+  // Crea solicitud de ABONO
+  const crearSolicitudAbono = async (proyectoId, monto) => {
+    const token = localStorage.getItem("token");
+    await fetch("http://localhost:4000/api/solicitudes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        proyectoId,
+        tipo: "ABONO",
+        payload: { abono: { monto } }
+      }),
+    });
+  };
+
+  // Crea solicitud de CAMBIO DE ESTADO
+  const crearSolicitudCambioEstado = async (proyectoId, nuevoEstado) => {
+    const token = localStorage.getItem("token");
+    await fetch("http://localhost:4000/api/solicitudes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        proyectoId,
+        tipo: "CAMBIO_ESTADO",
+        payload: { cambioEstado: { nuevoEstado, motivo: "Solicitado en edición de proyecto" } }
+      }),
+    });
+  };
+
+  // Consulta si hay bloqueo por solicitud pendiente de cambio a Finalizado/Cancelado
+  const cargarBloqueo = useCallback(async () => {
+    if (!proyecto?._id) return false;
+    const token = localStorage.getItem("token");
+    try {
+      const r = await fetch(`http://localhost:4000/api/solicitudes/bloqueo/${proyecto._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const j = await r.json();
+      const bloqueado = !!j.bloqueado;
+      setBloqueoCambioEstado(bloqueado);
+      return bloqueado;
+    } catch (e) {
+      console.error("Error consultando bloqueo:", e);
+      setBloqueoCambioEstado(false);
+      return false;
+    }
+  }, [proyecto?._id]);
+
   // Cargar documentos (adjuntos del chat + docs del proyecto)
   const loadDocumentos = useCallback(async (proyectoId) => {
     if (!proyectoId) return;
@@ -123,7 +174,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     }
   }, []);
 
-  // Cargar datos del proyecto + documentos
+  // Cargar datos del proyecto + documentos + bloqueo
   useEffect(() => {
     if (!proyecto?._id) return;
 
@@ -144,12 +195,24 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
 
     setEstadoPersistido(proyecto.estado || "En Curso"); // <- sincroniza bloqueo
     loadDocumentos(proyecto._id);
-  }, [proyecto, loadDocumentos]);
+    cargarBloqueo();
+  }, [proyecto, loadDocumentos, cargarBloqueo]);
 
-  // Guardar proyecto
+  // Guardar proyecto + generar solicitudes si aplica
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (isLocked) return;
+
+    // Revalidar que no haya aparecido un bloqueo justo antes de enviar
+    const bloqueadoAhora = await cargarBloqueo();
+    if (bloqueadoAhora) {
+      return mostrarModal({
+        titulo: "Edición bloqueada",
+        mensaje: "Hay una solicitud de cambio de estado pendiente. Espera su resolución.",
+        tipo: "warning",
+        onAceptar: cerrarModal
+      });
+    }
 
     if (!form.direccion.trim()) {
       return mostrarModal({ titulo: "Campo obligatorio", mensaje: `El campo "Dirección" es obligatorio.`, tipo: "warning", onAceptar: cerrarModal });
@@ -165,16 +228,23 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     }
 
     const token = localStorage.getItem("token");
+
+    const montoAbono = Number(form.saldo_a_abonar) || 0;
+    const quiereCambioEstado =
+      ["Finalizado", "Cancelado"].includes(form.estado) && form.estado !== estadoPersistido;
+
+    // En el PUT no aplicamos ni el abono ni el cambio de estado final/cancelado.
+    // Si el usuario pide Finalizado/Cancelado, mandamos el estado actual persistido para no cambiarlo aún.
     const body = {
       descripcion: form.descripcion.trim(),
       direccion: form.direccion.trim(),
       presupuesto_aprox: Number(form.presupuesto_aprox),
-      estado: form.estado,
+      estado: quiereCambioEstado ? estadoPersistido : form.estado,
       participantes: [
         { usuario_id: form.cliente, tipo_participante: "cliente" },
         { usuario_id: form.responsable, tipo_participante: "responsable" },
       ],
-      saldo_a_abonar: Number(form.saldo_a_abonar) || 0,
+      // No enviar saldo_a_abonar al PUT; se gestionará vía solicitud de abono
     };
 
     try {
@@ -185,26 +255,45 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       });
       const data = await res.json();
 
-      if (res.ok) {
-        setForm((s) => ({
-          ...s,
-          saldo_a_abonar: "",
-          saldo_abonado: data?.saldo_abonado != null ? String(data.saldo_abonado) : s.saldo_abonado,
-        }));
-
-        // 🔒 Bloquear inmediatamente si cambió a Finalizado/Cancelado
-        const nuevoEstado = data?.estado || form.estado;
-        setEstadoPersistido(nuevoEstado);
-
-        mostrarModal({
-          titulo: "Proyecto actualizado",
-          mensaje: "Los datos se enviaron correctamente.",
-          tipo: "success",
-          onAceptar: cerrarModal
-        });
-      } else {
-        mostrarModal({ titulo: "Error", mensaje: data?.mensaje || "No se pudo actualizar el proyecto.", tipo: "error", onAceptar: cerrarModal });
+      if (!res.ok) {
+        return mostrarModal({ titulo: "Error", mensaje: data?.mensaje || "No se pudo actualizar el proyecto.", tipo: "error", onAceptar: cerrarModal });
       }
+
+      // Generar solicitudes que correspondan
+      const solicitudes = [];
+      if (montoAbono > 0) {
+        try {
+          await crearSolicitudAbono(proyecto._id, montoAbono);
+          solicitudes.push("Solicitud de abono creada");
+        } catch (e1) {
+          console.error("Error creando solicitud de abono:", e1);
+        }
+      }
+      if (quiereCambioEstado) {
+        try {
+          await crearSolicitudCambioEstado(proyecto._id, form.estado);
+          solicitudes.push("Solicitud de cambio de estado creada");
+        } catch (e2) {
+          console.error("Error creando solicitud de cambio de estado:", e2);
+        }
+      }
+
+      // Limpiar campo de abono y mantener estadoPersistido tal cual respondió el backend
+      setForm((s) => ({
+        ...s,
+        saldo_a_abonar: "",
+        saldo_abonado: data?.saldo_abonado != null ? String(data.saldo_abonado) : s.saldo_abonado,
+        estado: data?.estado || s.estado, // mantiene el persistido si hubo solicitud de cambio
+      }));
+      setEstadoPersistido(data?.estado || estadoPersistido);
+
+      const extra = solicitudes.length ? ` ${solicitudes.join(". ")}.` : "";
+      mostrarModal({
+        titulo: "Proyecto actualizado",
+        mensaje: `Los datos se enviaron correctamente.${extra}`,
+        tipo: "success",
+        onAceptar: cerrarModal
+      });
     } catch (error) {
       console.error("Error al actualizar proyecto:", error);
       mostrarModal({ titulo: "Error de conexión", mensaje: "No se pudo conectar con el servidor.", tipo: "error", onAceptar: cerrarModal });
@@ -271,6 +360,13 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       {isCerrado && (
         <div className="alert-locked">
           Este proyecto está {estadoPersistido.toLowerCase()}. La edición de campos y carga de documentos está bloqueada.
+        </div>
+      )}
+
+      {/* Aviso de bloqueo por solicitud pendiente de cambio de estado */}
+      {bloqueoCambioEstado && !isCerrado && (
+        <div className="alert-locked">
+          Este proyecto tiene una solicitud de cambio de estado pendiente. La edición está bloqueada hasta su resolución.
         </div>
       )}
 

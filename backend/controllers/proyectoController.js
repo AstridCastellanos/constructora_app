@@ -1,4 +1,5 @@
 const Proyecto = require("../models/Proyecto");
+const SolicitudAprobacion = require("../models/SolicitudAprobacion");
 
 // Obtener todos los proyectos
 async function getProyectos(req, res) {
@@ -78,19 +79,54 @@ async function getProyectoById(req, res) {
 // Actualizar proyecto por ID (con incremento atómico de saldo_abonado)
 async function updateProyecto(req, res) {
   try {
+    // 1) Cargar proyecto actual y validar estado de cierre/bloqueo
+    const actual = await Proyecto.findById(req.params.id);
+    if (!actual) {
+      return res.status(404).json({ mensaje: "Proyecto no encontrado" });
+    }
+
+    // Si ya quedó Finalizado/Cancelado, no permitir edición
+    if (["Finalizado", "Cancelado"].includes(actual.estado)) {
+      return res.status(423).json({ mensaje: `Proyecto ${actual.estado}. Edición bloqueada.` });
+    }
+
+    // Si hay solicitud PENDIENTE para cambiar a Finalizado/Cancelado, bloquear edición
+    const solPend = await SolicitudAprobacion.findOne({
+      proyectoId: actual._id,
+      tipo: "CAMBIO_ESTADO",
+      estado: "PENDIENTE",
+      "payload.cambioEstado.nuevoEstado": { $in: ["Finalizado", "Cancelado"] },
+    }).select("_id codigo");
+    if (solPend) {
+      return res.status(423).json({ mensaje: `Edición bloqueada por solicitud ${solPend.codigo || solPend._id}.` });
+    }
+
+    // 2) Procesar payload de actualización (sin abonos aquí)
     const {
       descripcion,
       direccion,
       presupuesto_aprox,
       estado,
       participantes,
-      saldo_a_abonar,
+      saldo_a_abonar, // si llega, lo rechazamos: los abonos ahora van por solicitudes
     } = req.body;
+
+    // Si te llega un "saldo_a_abonar" (>0), rechazar para evitar inconsistencias
+    if (saldo_a_abonar !== undefined && saldo_a_abonar !== null) {
+      const monto = Number(saldo_a_abonar);
+      if (Number.isFinite(monto) && monto > 0) {
+        return res.status(400).json({ mensaje: "Los abonos se realizan mediante solicitudes de aprobación." });
+      }
+    }
 
     const setUpdate = {};
     if (typeof descripcion === "string") setUpdate.descripcion = descripcion.trim();
     if (typeof direccion === "string") setUpdate.direccion = direccion.trim();
+
+    // Permitimos actualizar "estado", pero si el front intenta enviar "Finalizado/Cancelado"
+    // no llegará aquí porque ya bloqueamos por solicitud pendiente. Aun así, se conserva.
     if (estado) setUpdate.estado = estado;
+
     if (presupuesto_aprox !== undefined && presupuesto_aprox !== null) {
       const p = Number(presupuesto_aprox);
       if (!Number.isFinite(p) || p <= 0) {
@@ -98,29 +134,19 @@ async function updateProyecto(req, res) {
       }
       setUpdate.presupuesto_aprox = p;
     }
+
     if (Array.isArray(participantes)) {
       setUpdate.participantes = participantes;
     }
 
-    const incUpdate = {};
-    if (saldo_a_abonar !== undefined && saldo_a_abonar !== null) {
-      const monto = Number(saldo_a_abonar);
-      if (!Number.isFinite(monto) || monto < 0) {
-        return res.status(400).json({ mensaje: "Saldo a abonar inválido" });
-      }
-      if (monto > 0) {
-        incUpdate.saldo_abonado = monto;
-      }
-    }
-
     const update = {};
     if (Object.keys(setUpdate).length) update.$set = setUpdate;
-    if (Object.keys(incUpdate).length) update.$inc = incUpdate;
 
     if (!Object.keys(update).length) {
       return res.status(400).json({ mensaje: "No hay cambios para aplicar" });
     }
 
+    // 3) Aplicar cambios
     const proyectoActualizado = await Proyecto.findByIdAndUpdate(
       req.params.id,
       update,
@@ -141,6 +167,7 @@ async function updateProyecto(req, res) {
     return res.status(500).json({ mensaje: "Error al actualizar proyecto" });
   }
 }
+
 
 // Listar documentos del proyecto
 async function listDocumentos(req, res) {

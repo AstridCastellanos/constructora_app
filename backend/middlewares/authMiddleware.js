@@ -3,8 +3,6 @@ const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
   try {
-    // Express normaliza headers a minúsculas en req.headers,
-    // pero req.header(...) es case-insensitive. Aun así, soportamos varias fuentes.
     const raw =
       req.header("authorization") ||
       req.header("Authorization") ||
@@ -14,7 +12,6 @@ module.exports = (req, res, next) => {
       return res.status(401).json({ mensaje: "Acceso denegado. Token no proporcionado." });
     }
 
-    // Soportar "Bearer <token>" o solo "<token>"
     const token = raw.startsWith("Bearer ") ? raw.slice(7).trim() : raw.trim();
     if (!token) {
       return res.status(401).json({ mensaje: "Acceso denegado. Token inválido." });
@@ -22,6 +19,7 @@ module.exports = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.usuario = decoded;
+    req.user = decoded;
     return next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {

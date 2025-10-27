@@ -15,6 +15,7 @@ const cambioProyectoRoutes = require("./routes/cambioProyectoRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const protegidaRoutes = require("./routes/protegidaRoutes");
 const proyectoDocumentosRoutes = require("./routes/proyectoDocumentosRoutes");
+const solicitudesRoutes = require("./routes/solicitudesRoutes");
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use("/api/notificaciones", notificacionRoutes);
 app.use("/api/cambios", cambioProyectoRoutes);
 app.use("/api/archivos", uploadRoutes);
 app.use("/api", proyectoDocumentosRoutes);
+app.use("/api/solicitudes", solicitudesRoutes);
 
 // Socket.IO
 io.on("connection", (socket) => {
