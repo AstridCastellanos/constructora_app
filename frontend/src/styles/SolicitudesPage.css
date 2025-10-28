@@ -1,6 +1,4 @@
-/* Reutiliza layout de ProyectosPage: layout, proyectos-col, p-header, p-table */
-
-/* Filtros */
+/* --- Filtros (ya tenías) --- */
 .filters {
   display: flex;
   align-items: center;
@@ -14,25 +12,72 @@
   font-size: 14px;
 }
 
-/* Estados (badges) */
+
+.th-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Base del select sin bordes (como en tu ProyectosPage.css modificado) */
+.estado-select {
+  font-size: 12px;
+  padding: 4px 6px;
+  border: none;
+  background: #fff;
+  outline: none;
+}
+
+/* Icon-only: solo flecha, oculta el texto seleccionado */
+.estado-select.icon-only {
+  color: transparent;
+  text-shadow: 0 0 0 transparent;
+  text-indent: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+
+  width: 28px;
+  height: 28px;
+  padding: 0 22px 0 0;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.estado-select.icon-only::-ms-expand { display: none; }
+.estado-select.icon-only:focus { border-color: var(--blue); }
+.estado-select.icon-only option { color: #111; }
+
+/* Encabezado Acciones a la derecha */
+.th-actions { text-align: right; }
+
+/* --- Badges de estado --- */
 .badge {
   padding: 6px 10px;
   border-radius: 999px;
-  font-weight: 600;
   font-size: 12px;
   display: inline-block;
 }
-.badge-pending { background: #fff7ed; color: #9a3412; }
+.badge-pending  { background: #fff7ed; color: #9a3412; }
 .badge-approved { background: #ecfdf5; color: #065f46; }
 .badge-rejected { background: #fef2f2; color: #991b1b; }
 .badge-conflict { background: #fffbeb; color: #92400e; }
-.badge-cancelled { background: #f3f4f6; color: #374151; }
+.badge-cancelled{ background: #f3f4f6; color: #374151; }
 
-/* Acciones (alineadas a la derecha como en tus tablas) */
+/* --- Acciones --- */
 .table-actions {
   text-align: right;
   white-space: nowrap;
 }
+
 .btn {
   padding: 6px 10px;
   border: 1px solid #eaeaea;
@@ -46,3 +91,76 @@
 .btn-approve { border-color: #d1fae5; }
 .btn-reject  { border-color: #fee2e2; }
 .btn-cancel  { border-color: #e5e7eb; }
+
+/* Colores de iconos (quitamos inline styles) */
+.icon-approve { color: #16a34a; }
+.icon-reject  { color: #dc2626; }
+
+/* --- Celdas estado vacío / loading --- */
+.loading-cell {
+  text-align: left;
+  padding: 20px;
+}
+.empty-cell {
+  text-align: center;
+  padding: 20px;
+}
+
+/* --- Modal rechazo: quitamos estilos inline del JSX --- */
+.modal-reject {
+  display: grid;
+  gap: 8px;
+}
+.modal-label {
+  font-weight: 600;
+}
+.modal-textarea {
+  resize: vertical;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  outline: none;
+}
+
+/* Hover/focus states */
+.btn-approve:hover,
+.btn-approve:focus-visible {
+  background: #ecfdf5;          /* verde muy suave */
+  border-color: #86efac;        /* borde verdoso sutil */
+}
+.btn-approve:hover .icon-approve,
+.btn-approve:focus-visible .icon-approve {
+  color: #15803d;               /* verde un poquito más oscuro */
+}
+
+.btn-reject:hover,
+.btn-reject:focus-visible {
+  background: #fef2f2;          /* rojo muy suave */
+  border-color: #fecaca;        /* borde rojizo sutil */
+}
+.btn-reject:hover .icon-reject,
+.btn-reject:focus-visible .icon-reject {
+  color: #b91c1c;               /* rojo un poquito más oscuro */
+}
+
+/* Activo (click) con micro-feedback */
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Accesibilidad: enfoque visible con teclado */
+.btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Estado deshabilitado (por si lo usas luego) */
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  background: #fff;
+  transform: none;
+}
+
+

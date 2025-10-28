@@ -81,6 +81,10 @@ input, select {
   cursor: pointer;
 }
 
+.btn-guardar:hover {
+  background-color: var(--blue-hover);
+}
+
 .btn-limpiar {
   background: var(--blue);
   color: white;
@@ -90,6 +94,10 @@ input, select {
   cursor: pointer;
 }
 
+.btn-limpiar:hover {
+  background-color: var(--blue-hover);
+}
+
 .btn-eliminar {
   background: #e63946;
   color: white;
@@ -97,6 +105,10 @@ input, select {
   border: none;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.btn-eliminar:hover {
+  background: #ba202d;
 }
 
 .msg {

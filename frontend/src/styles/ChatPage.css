@@ -44,8 +44,7 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
-  scroll-behavior: smooth;
-  padding-bottom: 90px; /* ✅ deja espacio para el input */
+  padding-bottom: 90px;
 }
 
 /* Input fijo visible arriba del teclado */

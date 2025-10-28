@@ -45,9 +45,7 @@ export default function ChatWindow({ project, onBack }) {
       ) {
         setMensajes((prev) => [...prev, msg]);
 
-        const esPropio =
-          msg.autor_id?._id === usuarioActual._id ||
-          msg.autor_id?.usuario_sistema === usuarioActual.usuario_sistema;
+        const esPropio = isOwnMessage(msg, usuarioActual);
 
         if (isAtBottom || esPropio) scrollToBottom();
         else setHasNewMessage(true);
@@ -59,14 +57,19 @@ export default function ChatWindow({ project, onBack }) {
   }, [project, isAtBottom, usuarioActual]);
 
   // Bajar automáticamente
-  // Actualizado: permitir modo instantáneo para el primer render o cuando sea necesario
-  const scrollToBottom = ({ instant = false } = {}) =>
-    messagesEndRef.current?.scrollIntoView({
-      behavior: instant ? "auto" : "smooth",
-      block: "end",
-    });
+  const scrollToBottom = ({ instant = false } = {}) => {
+    const el = chatBodyRef.current;
+    if (!el) return;
 
-  // Nuevo: al montar el componente, baja al final después de que el DOM haya calculado alturas
+    const top = el.scrollHeight; // valor definitivo del fondo
+    if (instant) {
+      el.scrollTop = top;                 
+    } else {
+      el.scrollTo({ top, behavior: "smooth" }); // smooth para acciones del usuario
+    }
+  };
+
+  // al montar el componente, baja al final después de que el DOM haya calculado alturas
   useEffect(() => {
     // Dos requestAnimationFrame garantizan que se haya pintado y medido el layout
     requestAnimationFrame(() => {
@@ -75,8 +78,12 @@ export default function ChatWindow({ project, onBack }) {
   }, []);
 
   useEffect(() => {
-    if (isAtBottom) scrollToBottom();
-  }, [mensajes, isAtBottom]);
+    if (!isAtBottom) return;
+      // Espera a que React pinte el nuevo mensaje y calcule alturas
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => scrollToBottom({ instant: true }));
+      });
+    }, [mensajes, isAtBottom]);
 
   // Nuevo: volver a bajar cuando cargan imágenes/adjuntos que modifican la altura del contenedor
   useEffect(() => {
@@ -216,7 +223,7 @@ export default function ChatWindow({ project, onBack }) {
     const el = chatBodyRef.current;
     if (!el) return;
 
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    const atBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) <= 1;
     setIsAtBottom(atBottom);
   };
 
@@ -246,6 +253,23 @@ export default function ChatWindow({ project, onBack }) {
     return `${base}?${qs}`;
   };
 
+  const isOwnMessage = (msg, user) => {
+    const msgId = String(
+      msg?.autor_id?._id ??
+      msg?.autor_id?.id ??
+      msg?.autor_id // por si el backend manda el id directo
+    );
+
+    const userId = String(user?._id ?? user?.id ?? "");
+
+    const msgUser = (msg?.autor_id?.usuario_sistema || "").toLowerCase();
+    const userUser = (user?.usuario_sistema || "").toLowerCase();
+
+    // compara por id si existe, si no, por usuario_sistema normalizado
+    return (!!msgId && !!userId && msgId === userId) ||
+          (!!msgUser && !!userUser && msgUser === userUser);
+  };
+
   return (
     <div className="cw">
       <header className="cw-head">
@@ -270,9 +294,7 @@ export default function ChatWindow({ project, onBack }) {
       <main className="cw-body" ref={chatBodyRef} onScroll={handleScroll}>
         {mensajes.length > 0 ? (
           mensajes.map((m) => {
-            const esPropio =
-              m.autor_id?._id === usuarioActual._id ||
-              m.autor_id?.usuario_sistema === usuarioActual.usuario_sistema;
+            const esPropio = isOwnMessage(m, usuarioActual);
 
             const nombre = m.autor_id?.nombres || "Usuario";
             const usuario = m.autor_id?.usuario_sistema || "sin_usuario";

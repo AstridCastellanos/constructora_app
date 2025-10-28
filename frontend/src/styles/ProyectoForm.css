@@ -100,9 +100,8 @@
 }
 
 .btn-cancelar {
-  background: #bcbcbc;
-  color: #333;
-  border: none;
+  border: 1px solid #eaeaea;
+  background: #fff;
   padding: 10px 20px;
   border-radius: 8px;
   cursor: pointer;
@@ -113,7 +112,8 @@
 }
 
 .btn-cancelar:hover {
-  background: #a3a3a3;
+  background: #f8fafc;
+  border-color: #e5e7eb;
 }
 
 
@@ -186,7 +186,7 @@
 }
 
 .documentos-section .btn-guardar:hover {
-  background: #2d6cb4;
+  background: var(--blue-hover);
 }
 
 /* === Encabezado de Detalles de Proyecto === */

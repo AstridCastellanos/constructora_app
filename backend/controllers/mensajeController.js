@@ -1,4 +1,5 @@
 // controllers/mensajeController.js
+const mongoose = require("mongoose");
 const Mensaje = require("../models/Mensaje");
 const cloudinary = require("../config/cloudinary.js").default;
 
@@ -23,68 +24,108 @@ function mapTipoToResourceType(tipo, publicId) {
 // POST /api/mensajes
 async function crearMensaje(req, res) {
   try {
+    console.log("[crearMensaje] HIT", {
+      bodyKeys: Object.keys(req.body || {}),
+      id_proyecto: req.body?.id_proyecto,
+      autor_id: req.body?.autor_id,
+    });
+
     const nuevoMensaje = new Mensaje(req.body);
     const guardado = await nuevoMensaje.save();
 
-    // importante: devolver el mensaje con datos de autor como antes
+    // Devuelve el mensaje con datos de autor como antes
     const mensajeConAutor = await guardado.populate("autor_id", "nombres usuario_sistema");
 
-    // === Notificaciones: a todos los participantes excepto el autor (incluye clientes) ===
+    // === Participantes del proyecto (incluye clientes) ===
     const participantes = await participantesProyecto(guardado.id_proyecto);
+    console.log("[crearMensaje] participantes (crudo):", participantes);
 
-    // Normaliza el autor a string de forma segura
-    const autorIdStr =
-      (guardado.autor_id && typeof guardado.autor_id.toString === "function")
-        ? guardado.autor_id.toString()
-        : String(guardado.autor_id);
+    // Normaliza SIEMPRE el id del autor a string
+    const autorIdStr = String(
+      guardado?.autor_id?._id ??
+      guardado?.autor_id ??
+      ""
+    );
+    console.log("[crearMensaje] autorIdStr(normalizado):", autorIdStr);
 
-    // De-dup + exclusión del autor (manteniendo los valores originales para pasar al helper)
-    const vistos = new Set();
-    const destinatarios = [];
-    for (const uid of participantes || []) {
-      const uidStr = (uid && typeof uid.toString === "function") ? uid.toString() : String(uid);
-      if (uidStr === autorIdStr) continue;      // no notificar al autor
-      if (vistos.has(uidStr)) continue;         // evitar duplicados
-      vistos.add(uidStr);
-      destinatarios.push(uid);                  
-    }
+    // helper local para normalizar ids (doc, ObjectId o string)
+    const normId = (v) => {
+      try {
+        if (!v) return "";
+        if (typeof v === "string") return v;
+        if (v instanceof mongoose.Types.ObjectId) return v.toString();
+        if (v._id) return String(v._id); // doc poblado
+        return String(v);                // fallback
+      } catch {
+        return "";
+      }
+    };
 
-    // Obtener nombre del proyecto para el título (como acordamos)
+    // Obtener nombre del proyecto para el título
     const Proyecto = require("../models/Proyecto");
     const proyecto = await Proyecto.findById(guardado.id_proyecto).select("nombre");
-
     const titulo = proyecto?.nombre
       ? `Nuevo mensaje en ${proyecto.nombre}`
       : "Nuevo mensaje en el proyecto";
 
     // Cuerpo: "usuario_sistema: contenido"
-    const autorUser = mensajeConAutor?.autor_id?.usuario_sistema; // obligatorio en tu schema
-    const contenidoBase = (guardado.contenido && guardado.contenido.trim())
-      ? guardado.contenido.trim().slice(0, 120)
-      : "Mensaje con adjuntos";
+    const autorUser = mensajeConAutor?.autor_id?.usuario_sistema || "usuario";
+    const contenidoBase =
+      (guardado.contenido && guardado.contenido.trim())
+        ? guardado.contenido.trim().slice(0, 120)
+        : "Mensaje con adjuntos";
     const preview = `${autorUser}: ${contenidoBase}`;
 
-    await Promise.all(
-      destinatarios.map((uid) =>
-        // Doble defensa por si acaso
-        ( (uid && (uid.toString ? uid.toString() : String(uid)) ) !== autorIdStr )
-          ? crearNotificacion({
-              id_usuario: uid,
-              id_proyecto: guardado.id_proyecto,
-              tipo: "chat_mensaje",
-              titulo,
-              mensaje: preview,
-            })
-          : null
-      )
-    );
+    // De-dup + exclusión del autor, y solo ids normalizados
+    const vistos = new Set();
+    const destinatarios = [];
+
+    for (const uid of participantes || []) {
+      const uidStr = normId(uid);
+      const esAutor = uidStr && autorIdStr && uidStr === autorIdStr;
+      console.log("[crearMensaje] candidato:", uidStr, "| esAutor?", esAutor);
+
+      if (!uidStr) continue;
+      if (esAutor) continue;            // EXCLUIR AUTOR SIEMPRE
+      if (vistos.has(uidStr)) continue; // evita duplicados
+      vistos.add(uidStr);
+      destinatarios.push(uidStr);
+    }
+
+    console.log("[crearMensaje] destinatarios (filtrados):", destinatarios);
+
+    // NOTIFICAR (una sola vez)
+    if (destinatarios.length) {
+      await Promise.all(
+        destinatarios.map((uidStr) => {
+          if (uidStr === autorIdStr) {
+            console.warn("[crearMensaje] ⚠️ Autor colado, no se notifica:", uidStr);
+            return null;
+          }
+          console.log(
+            "[crearMensaje] crearNotificacion ->",
+            JSON.stringify({ uidStr, tipo: "chat_mensaje", titulo, preview })
+          );
+          return crearNotificacion({
+            id_usuario: uidStr,
+            id_proyecto: guardado.id_proyecto,
+            tipo: "chat_mensaje",
+            titulo,
+            mensaje: preview,
+          });
+        })
+      );
+    }
 
     return res.status(201).json(mensajeConAutor);
   } catch (error) {
     console.error("Error al crear mensaje:", error);
-    return res.status(400).json({ mensaje: "Error al crear mensaje", error: error.message || error });
+    return res
+      .status(400)
+      .json({ mensaje: "Error al crear mensaje", error: error.message || error });
   }
 }
+
 
 // GET /api/mensajes
 async function listarMensajes(req, res) {

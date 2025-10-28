@@ -111,6 +111,8 @@ export default function Login() {
                     setPassword(value);
                   }
                 }}
+                minLength={10}
+                maxLength={40} // ← 🔹 límite directo
               />
               <span
                 className="password-toggle"

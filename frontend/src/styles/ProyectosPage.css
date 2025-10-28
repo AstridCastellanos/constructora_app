@@ -83,7 +83,31 @@
 }
 
 .btn-nuevo:hover {
-  background-color: var(--accent);
+  background-color: var(--blue-hover);
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #eaeaea;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  white-space: nowrap;
+}
+.btn-export:hover,
+.btn-export:focus-visible {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+}
+.icon-export { color: #374151; }
+
+@media (max-width: 480px) {
+  .hide-sm { display: none; }
 }
 
 
@@ -91,6 +115,11 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
+}
+
+/* Resaltado suave de fila al pasar el mouse */
+.p-table tbody tr:hover {
+  background: #fafafa;
 }
 
 .p-table th {
@@ -149,3 +178,63 @@
 .estado--cancelado {
   background-color: #a5a2a2; /* Gris oscuro, tu color solicitado */
 }
+
+
+/* Contenedor del encabezado Estado */
+.th-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Base del select (ya lo tenías) */
+.estado-select {
+  font-size: 12px;
+  padding: 4px 6px;
+  border: none;
+  background: #fff;
+  outline: none;
+}
+
+/* Modo icon-only: oculta el texto visible pero mantiene accesibilidad */
+.estado-select.icon-only {
+  /* Ocultar texto visible */
+  color: transparent;
+  text-shadow: 0 0 0 transparent;
+  text-indent: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+
+  /* Tamaño compacto */
+  width: 28px;
+  height: 28px;
+  padding: 0 22px 0 0; /* espacio para el ícono */
+
+  /* Quitar apariencia nativa y poner chevron */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+/* Quitar el ícono de IE */
+.estado-select.icon-only::-ms-expand {
+  display: none;
+}
+
+.estado-select.icon-only:focus {
+  border-color: var(--blue);
+}
+
+/* Asegurar que las opciones del menú se vean con texto normal */
+.estado-select.icon-only option {
+  color: #111; /* el desplegable sí muestra texto */
+}
+
+

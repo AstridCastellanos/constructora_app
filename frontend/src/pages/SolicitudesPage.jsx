@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext } from "react";
 import Sidebar from "../components/Sidebar";
-import { Search, Check, X } from "lucide-react";
-import "../styles/ProyectosPage.css"; // reutiliza el mismo CSS de ProyectosPage
-import "../styles/SolicitudesPage.css";
+import { Search, Check, X, Download } from "lucide-react";
+import { exportToXlsx } from "../utils/excelExport";
+import "../styles/ProyectosPage.css"; 
+import "../styles/SolicitudesPage.css"; 
 import { AuthContext } from "../context/AuthContext";
 import ModalMensaje from "../components/ModalMensaje";
 
@@ -17,7 +18,7 @@ export default function SolicitudesPage() {
   const [filtroTipo, setFiltroTipo] = useState("");
   const [cargando, setCargando] = useState(true);
 
-  // Modal para rechazo con motivo
+  // Modal rechazo
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectId, setRejectId] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
@@ -58,12 +59,11 @@ export default function SolicitudesPage() {
         alert(err.mensaje || "No se pudo aprobar");
       }
       cargar();
-    } catch (e) {
+    } catch {
       alert("No se pudo aprobar");
     }
   };
 
-  // Abrir modal para capturar motivo del rechazo
   const abrirModalRechazo = (id) => {
     setRejectId(id);
     setRejectReason("");
@@ -127,6 +127,58 @@ export default function SolicitudesPage() {
     );
   });
 
+  // Exportar a Excel usando solo las filas visibles (filtradas)
+const handleExport = async () => {
+  const rows = solicitudesFiltradas.map((s) => {
+    const solicitante =
+      s.solicitanteId?.usuario_sistema || s.solicitanteId?.email || "-";
+
+    const esAuto =
+      typeof s.comentarioDecision === "string" &&
+      s.comentarioDecision.toUpperCase().includes("AUTOAPROBADO");
+
+    const aprobador =
+      s.decididaPorId?.usuario_sistema || (esAuto ? "AUTOAPROBADO" : "-");
+
+    const proyectoNombre =
+      s.proyectoId?.nombre || s.proyectoId?.codigo || "-";
+
+    const resumen =
+      s.tipo === "ABONO"
+        ? `Abono Q${Number(s?.payload?.abono?.monto || 0).toLocaleString("es-GT")}`
+        : `${s?.payload?.cambioEstado?.nuevoEstado || ""}`;
+
+    return {
+      "Código": s.codigo,
+      "Proyecto": proyectoNombre,
+      "Tipo": s.tipo,
+      "Resumen": resumen,
+      "Solicitante": solicitante,
+      "Aprobador": aprobador,
+      "Fecha": new Date(s.solicitadaEn).toLocaleString("es-GT"),
+      "Estado": s.estado,
+    };
+  });
+
+  await exportToXlsx(rows, {
+    sheetName: "Solicitudes",
+    filePrefix: "Solicitudes", 
+    // headers: ["Código","Proyecto","Tipo","Resumen","Solicitante","Aprobador","Fecha","Estado"], // opcional
+  });
+};
+
+  const EstadoBadge = ({ estado }) => {
+    const e = String(estado || "").toUpperCase();
+    const map = {
+      PENDIENTE: "badge badge-pending",
+      APROBADA: "badge badge-approved",
+      RECHAZADA: "badge badge-rejected",
+      CONFLICTO: "badge badge-conflict",
+      CANCELADA: "badge badge-cancelled",
+    };
+    return <span className={map[e] || "badge"}>{estado || "-"}</span>;
+  };
+
   return (
     <div className="layout">
       <Sidebar />
@@ -145,21 +197,14 @@ export default function SolicitudesPage() {
                 onKeyDown={(e) => e.key === "Enter" && cargar()}
               />
             </div>
-
-            <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
-              <option value="">Todos los estados</option>
-              <option value="PENDIENTE">Pendiente</option>
-              <option value="APROBADA">Aprobada</option>
-              <option value="RECHAZADA">Rechazada</option>
-              <option value="CONFLICTO">Conflicto</option>
-              <option value="CANCELADA">Cancelada</option>
-            </select>
-
-            <select value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-              <option value="">Todos los tipos</option>
-              <option value="ABONO">Abono</option>
-              <option value="CAMBIO_ESTADO">Cambio de estado</option>
-            </select>
+            <button
+              className="btn btn-export"
+              onClick={handleExport}
+              title="Exportar a Excel"
+            >
+              <Download size={18} className="icon-export" />
+              <span className="hide-sm">Exportar</span>
+            </button>
           </div>
         </div>
 
@@ -168,21 +213,59 @@ export default function SolicitudesPage() {
             <tr>
               <th>Código</th>
               <th>Proyecto</th>
-              <th>Tipo</th>
+
+              {/* Encabezado TIPO con select icon-only (reutiliza .estado-select) */}
+              <th>
+                <div className="th-estado">
+                  <span>Tipo</span>
+                  <select
+                    className="estado-select icon-only"
+                    value={filtroTipo}
+                    onChange={(e) => setFiltroTipo(e.target.value)}
+                    aria-label="Filtrar por tipo"
+                    title="Filtrar por tipo"
+                  >
+                    <option value="">Todos</option>
+                    <option value="ABONO">Abono</option>
+                    <option value="CAMBIO_ESTADO">Cambio de estado</option>
+                  </select>
+                </div>
+              </th>
+
               <th>Resumen</th>
               <th>Solicitante</th>
               <th>Aprobador</th>
               <th>Fecha</th>
-              <th>Estado</th>
-              <th style={{ textAlign: "right" }}>Acciones</th>
+
+              {/* Encabezado ESTADO con select icon-only */}
+              <th>
+                <div className="th-estado">
+                  <span>Estado</span>
+                  <select
+                    className="estado-select icon-only"
+                    value={filtroEstado}
+                    onChange={(e) => setFiltroEstado(e.target.value)}
+                    aria-label="Filtrar por estado"
+                    title="Filtrar por estado"
+                  >
+                    <option value="">Todos</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="APROBADA">Aprobada</option>
+                    <option value="RECHAZADA">Rechazada</option>
+                    <option value="CONFLICTO">Conflicto</option>
+                    <option value="CANCELADA">Cancelada</option>
+                  </select>
+                </div>
+              </th>
+
+              <th className="th-actions">Acciones</th>
             </tr>
           </thead>
+
           <tbody>
             {cargando ? (
               <tr>
-                <td colSpan="9" style={{ textAlign: "left", padding: "20px" }}>
-                  Cargando...
-                </td>
+                <td colSpan="9" className="loading-cell">Cargando...</td>
               </tr>
             ) : solicitudesFiltradas.length > 0 ? (
               solicitudesFiltradas.map((s) => {
@@ -209,7 +292,6 @@ export default function SolicitudesPage() {
                     ? `Abono Q${Number(s?.payload?.abono?.monto || 0).toLocaleString("es-GT")}`
                     : `${s?.payload?.cambioEstado?.nuevoEstado || ""}`;
 
-                // Permitir que el titular apruebe incluso si él mismo creó la solicitud (autoaprobación)
                 const puedeAccionar = esTitular && s.estado === "PENDIENTE";
 
                 return (
@@ -221,7 +303,7 @@ export default function SolicitudesPage() {
                     <td>{solicitante}</td>
                     <td>{aprobador}</td>
                     <td>{new Date(s.solicitadaEn).toLocaleString()}</td>
-                    <td>{s.estado}</td>
+                    <td><EstadoBadge estado={s.estado} /></td>
                     <td className="table-actions">
                       {puedeAccionar ? (
                         <>
@@ -229,17 +311,15 @@ export default function SolicitudesPage() {
                             className="btn btn-approve"
                             onClick={() => aprobar(s._id)}
                             title="Aprobar"
-                            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                           >
-                            <Check size={18} style={{ color: "#16a34a" }} />
+                            <Check size={18} className="icon-approve" />
                           </button>
                           <button
                             className="btn btn-reject"
                             onClick={() => abrirModalRechazo(s._id)}
                             title="Rechazar"
-                            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
                           >
-                            <X size={18} style={{ color: "#dc2626" }} />
+                            <X size={18} className="icon-reject" />
                           </button>
                         </>
                       ) : s.estado === "PENDIENTE" &&
@@ -256,7 +336,7 @@ export default function SolicitudesPage() {
               })
             ) : (
               <tr>
-                <td colSpan="9" style={{ textAlign: "center", padding: "20px" }}>
+                <td colSpan="9" className="empty-cell">
                   No hay solicitudes que coincidan.
                 </td>
               </tr>
@@ -276,22 +356,15 @@ export default function SolicitudesPage() {
         textoCancelar="Cancelar"
         mostrarCancelar
       >
-        <div style={{ display: "grid", gap: 8 }}>
-          <label htmlFor="motivo-rechazo" style={{ fontWeight: 600 }}>Motivo (opcional)</label>
+        <div className="modal-reject">
+          <label htmlFor="motivo-rechazo" className="modal-label">Motivo (opcional)</label>
           <textarea
             id="motivo-rechazo"
             rows={4}
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             placeholder="Escribe el motivo del rechazo..."
-            style={{
-              resize: "vertical",
-              width: "100%",
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid #e5e7eb",
-              outline: "none"
-            }}
+            className="modal-textarea"
           />
         </div>
       </ModalMensaje>
