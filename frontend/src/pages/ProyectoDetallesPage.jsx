@@ -4,6 +4,7 @@ import ProyectoDetalles from "../components/ProyectoDetalles";
 import ChatWindow from "../components/ChatWindow";
 import { useParams } from "react-router-dom";
 import "../styles/ProyectoForm.css";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function ProyectoDetallesPage() {
   const { id } = useParams();
@@ -12,7 +13,7 @@ export default function ProyectoDetallesPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch(`http://localhost:4000/api/proyectos/${id}`, {
+    fetch(`${API}/api/proyectos/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

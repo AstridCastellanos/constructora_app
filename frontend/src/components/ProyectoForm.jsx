@@ -8,6 +8,7 @@ import {
   sanitizeText,
   onlyPositiveNumbers,
 } from "../utils/inputValidators";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function ProyectoForm() {
   const navigate = useNavigate();
@@ -47,10 +48,10 @@ export default function ProyectoForm() {
     const token = localStorage.getItem("token");
 
     Promise.all([
-      fetch("http://localhost:4000/api/usuarios/clientes", {
+      fetch(`${API}/api/usuarios/clientes`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      fetch("http://localhost:4000/api/usuarios/responsables", {
+      fetch(`${API}/api/usuarios/responsables`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     ])
@@ -70,7 +71,6 @@ export default function ProyectoForm() {
 
   // Validaciones antes de enviar
   const validarFormulario = () => {
-    // Diccionario de nombres amigables para los campos
     const etiquetas = {
       nombre: "Nombre del Proyecto",
       direccion: "Dirección",
@@ -129,7 +129,7 @@ export default function ProyectoForm() {
     };
 
     try {
-      const res = await fetch("http://localhost:4000/api/proyectos", {
+      const res = await fetch(`${API}/api/proyectos`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -181,7 +181,6 @@ export default function ProyectoForm() {
         <form className="form-proyecto" onSubmit={handleSubmit}>
           <div className="form-grid">
 
-            {/* NOMBRE */}
             <label>
               Nombre del Proyecto:
               <input
@@ -194,12 +193,11 @@ export default function ProyectoForm() {
                     setForm({ ...form, nombre: val });
                   }
                 }}
-                placeholder="Ej. Residencial Las Brisas"
+                placeholder=" "
                 maxLength={100}
               />
             </label>
 
-            {/* DESCRIPCIÓN */}
             <label>
               Descripción:
               <textarea
@@ -214,7 +212,6 @@ export default function ProyectoForm() {
               ></textarea>
             </label>
 
-            {/* DIRECCIÓN */}
             <label>
               Dirección:
               <input
@@ -225,12 +222,11 @@ export default function ProyectoForm() {
                   const limpio = sanitizeText(e.target.value);
                   setForm({ ...form, direccion: limpio });
                 }}
-                placeholder="Ej. 4ta avenida zona 1, Chiquimulilla"
+                placeholder=" "
                 maxLength={150}
               />
             </label>
 
-            {/* PRESUPUESTO */}
             <label>
               Presupuesto Aproximado (Q):
               <input
@@ -243,11 +239,10 @@ export default function ProyectoForm() {
                     setForm({ ...form, presupuesto_aprox: val });
                   }
                 }}
-                placeholder="Ej. 150000"
+                placeholder=" "
               />
             </label>
 
-            {/* SALDO ABONADO */}
             <label>
               Saldo Abonado (Q):
               <input
@@ -260,11 +255,10 @@ export default function ProyectoForm() {
                     setForm({ ...form, saldo_abonado: val });
                   }
                 }}
-                placeholder="Ej. 50000"
+                placeholder=" "
               />
             </label>
 
-            {/* ESTADO */}
             <label>
               Estado:
               <select name="estado" value={form.estado} onChange={handleChange}>
@@ -275,7 +269,6 @@ export default function ProyectoForm() {
               </select>
             </label>
 
-            {/* CLIENTE */}
             <label>
               Cliente:
               <select
@@ -296,7 +289,6 @@ export default function ProyectoForm() {
               </select>
             </label>
 
-            {/* RESPONSABLE */}
             <label>
               Responsable:
               <select
@@ -333,7 +325,6 @@ export default function ProyectoForm() {
         </form>
       </section>
 
-      {/* Modal global para mensajes */}
       <ModalMensaje {...modal} />
     </div>
   );

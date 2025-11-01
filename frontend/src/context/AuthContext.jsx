@@ -4,13 +4,13 @@ export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
-  const [roles, setRoles] = useState([]); // 👈 ahora plural y array
+  const [roles, setRoles] = useState([]); 
   const [token, setToken] = useState(null);
 
-  // 🔹 Cargar datos almacenados al iniciar la app
+  // Cargar datos almacenados al iniciar la app
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem("usuario");
-    const rolesGuardados = localStorage.getItem("rol"); // mantenemos la misma clave por compatibilidad
+    const rolesGuardados = localStorage.getItem("rol"); 
     const tokenGuardado = localStorage.getItem("token");
 
     if (usuarioGuardado && tokenGuardado) {
@@ -26,7 +26,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // 🔹 Iniciar sesión (guardar datos en contexto y localStorage)
+  // Iniciar sesión (guardar datos en contexto y localStorage)
   const login = (usuario, rolesUsuario, token) => {
     const usuarioObj =
       typeof usuario === "string" ? JSON.parse(usuario) : usuario;
@@ -41,11 +41,11 @@ export function AuthProvider({ children }) {
     setToken(token);
 
     localStorage.setItem("usuario", JSON.stringify(usuarioObj));
-    localStorage.setItem("rol", JSON.stringify(rolesArray)); // 👈 ahora siempre guarda array
+    localStorage.setItem("rol", JSON.stringify(rolesArray)); 
     localStorage.setItem("token", token);
   };
 
-  // 🔹 Cerrar sesión (limpiar todo)
+  // Cerrar sesión (limpiar todo)
   const logout = () => {
     setUsuario(null);
     setRoles([]);

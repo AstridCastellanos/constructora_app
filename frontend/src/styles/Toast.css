@@ -12,23 +12,23 @@
   animation: fadeIn 0.3s ease-out;
   z-index: 9999;
   backdrop-filter: blur(6px);
-  background: rgba(0, 0, 0, 0.7); /* fondo semitransparente */
+  background: rgba(0, 0, 0, 0.7); 
 }
 
 .toast--success {
-  background: rgba(76, 175, 80, 0.85); /* verde translúcido */
+  background: rgba(76, 175, 80, 0.85); 
 }
 
 .toast--error {
-  background: rgba(229, 57, 53, 0.85); /* rojo translúcido */
+  background: rgba(229, 57, 53, 0.85); 
 }
 
 .toast--warning {
-  background: rgba(255, 152, 0, 0.85); /* naranja translúcido */
+  background: rgba(255, 152, 0, 0.85); 
 }
 
 .toast--info {
-  background: rgba(33, 150, 243, 0.85); /* azul translúcido */
+  background: rgba(33, 150, 243, 0.85); 
 }
 
 @keyframes fadeIn {

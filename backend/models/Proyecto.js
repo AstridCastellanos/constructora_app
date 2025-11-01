@@ -40,7 +40,6 @@ const proyectoSchema = new mongoose.Schema({
   saldo_pendiente: {
     type: Number,
     default: function () {
-      // se recalcula en hooks también
       return (this.presupuesto_aprox || 0) - (this.saldo_abonado || 0);
     },
   },
@@ -68,7 +67,7 @@ proyectoSchema.pre("save", function (next) {
   next();
 });
 
-// También recalcular cuando actualizas vía findOneAndUpdate/ findByIdAndUpdate
+// Recalcular cuando actualiza vía findOneAndUpdate/ findByIdAndUpdate
 proyectoSchema.pre(["findOneAndUpdate", "findByIdAndUpdate"], function (next) {
   const update = this.getUpdate() || {};
   const $set = update.$set || {};
@@ -77,7 +76,7 @@ proyectoSchema.pre(["findOneAndUpdate", "findByIdAndUpdate"], function (next) {
   next();
 });
 
-// Generar automáticamente un código correlativo tipo P-0001, P-0002, ... de forma atómica
+// Generar automáticamente un código correlativo tipo P-0001 de forma atómica
 proyectoSchema.pre("validate", async function (next) {
   if (!this.isNew || this.codigo_proyecto) return next();
   try {

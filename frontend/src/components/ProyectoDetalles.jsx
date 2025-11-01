@@ -4,11 +4,12 @@ import ModalMensaje from "./ModalMensaje";
 import "../styles/ProyectoForm.css";
 import { sanitizeText, onlyPositiveNumbers } from "../utils/inputValidators";
 import { AuthContext } from "../context/AuthContext";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOpenChat }) {
   const { usuario } = useContext(AuthContext);
   const roles = usuario?.roles || [];
-  // Solo lectura si es cliente y NO es titular ni colaborador
+  // Solo lectura si es cliente y no es titular ni colaborador
   const isReadOnly = roles.includes("cliente") && !roles.some(r => r === "titular" || r === "colaborador");
 
   // Form local
@@ -23,7 +24,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     responsable: "",
   });
 
-  // Estado persistido en BD (clave para bloquear inmediatamente tras guardar)
   const [estadoPersistido, setEstadoPersistido] = useState(proyecto?.estado || "En Curso");
 
   // Se considera cerrado si está Finalizado o Cancelado
@@ -62,8 +62,8 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
   useEffect(() => {
     const token = localStorage.getItem("token");
     Promise.all([
-      fetch("http://localhost:4000/api/usuarios/clientes", { headers: { Authorization: `Bearer ${token}` } }),
-      fetch("http://localhost:4000/api/usuarios/responsables", { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API}/api/usuarios/clientes`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API}/api/usuarios/responsables`, { headers: { Authorization: `Bearer ${token}` } }),
     ])
       .then(async ([resC, resR]) => {
         const clientes = await resC.json();
@@ -73,9 +73,9 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       .catch((err) => console.error("Error al cargar usuarios:", err));
   }, []);
 
-  // ==== helpers para links centralizados ====
+  // Helpers para links centralizados ====
   const rtForDoc = (doc) => {
-    if (doc?.resource_type) return doc.resource_type; // "image" | "video" | "raw"
+    if (doc?.resource_type) return doc.resource_type; 
     const f = String(doc?.formato || "").toLowerCase();
     if (["jpg","jpeg","png","gif","webp","svg"].includes(f)) return "image";
     if (["mp4","mov","webm","avi","mkv"].includes(f)) return "video";
@@ -84,15 +84,14 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
 
   const buildArchivoUrl = (doc, download = false) => {
     const rt = rtForDoc(doc);
-    const base = `http://localhost:4000/api/mensajes/archivo/${encodeURIComponent(doc.public_id)}`;
+    const base = `${API}/api/mensajes/archivo/${encodeURIComponent(doc.public_id)}`;
     return `${base}?rt=${rt}${download ? "&download=true" : ""}`;
   };
-  // ===========================================
 
   // Crea solicitud de ABONO
   const crearSolicitudAbono = async (proyectoId, monto) => {
     const token = localStorage.getItem("token");
-    await fetch("http://localhost:4000/api/solicitudes", {
+    await fetch(`${API}/api/solicitudes`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -106,7 +105,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
   // Crea solicitud de CAMBIO DE ESTADO
   const crearSolicitudCambioEstado = async (proyectoId, nuevoEstado) => {
     const token = localStorage.getItem("token");
-    await fetch("http://localhost:4000/api/solicitudes", {
+    await fetch(`${API}/api/solicitudes`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -122,7 +121,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     if (!proyecto?._id) return false;
     const token = localStorage.getItem("token");
     try {
-      const r = await fetch(`http://localhost:4000/api/solicitudes/bloqueo/${proyecto._id}`, {
+      const r = await fetch(`${API}/api/solicitudes/bloqueo/${proyecto._id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const j = await r.json();
@@ -136,17 +135,17 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     }
   }, [proyecto?._id]);
 
-  // Cargar documentos (adjuntos del chat + docs del proyecto)
+  // Cargar documentos (adjuntos del chat o docs del proyecto)
   const loadDocumentos = useCallback(async (proyectoId) => {
     if (!proyectoId) return;
     const token = localStorage.getItem("token");
 
     try {
       const [resMensajes, resDocsProyecto] = await Promise.all([
-        fetch(`http://localhost:4000/api/mensajes/proyecto/${proyectoId}`, {
+        fetch(`${API}/api/mensajes/proyecto/${proyectoId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`http://localhost:4000/api/proyectos/${proyectoId}/documentos`, {
+        fetch(`${API}/api/proyectos/${proyectoId}/documentos`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -193,12 +192,12 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       responsable: responsableObj?.usuario_id?._id || "",
     }));
 
-    setEstadoPersistido(proyecto.estado || "En Curso"); // <- sincroniza bloqueo
+    setEstadoPersistido(proyecto.estado || "En Curso"); 
     loadDocumentos(proyecto._id);
     cargarBloqueo();
   }, [proyecto, loadDocumentos, cargarBloqueo]);
 
-  // Guardar proyecto + generar solicitudes si aplica
+  // Guardar proyecto y generar solicitudes si aplica
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (isLocked) return;
@@ -233,8 +232,6 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
     const quiereCambioEstado =
       ["Finalizado", "Cancelado"].includes(form.estado) && form.estado !== estadoPersistido;
 
-    // En el PUT no aplicamos ni el abono ni el cambio de estado final/cancelado.
-    // Si el usuario pide Finalizado/Cancelado, mandamos el estado actual persistido para no cambiarlo aún.
     const body = {
       descripcion: form.descripcion.trim(),
       direccion: form.direccion.trim(),
@@ -244,11 +241,10 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
         { usuario_id: form.cliente, tipo_participante: "cliente" },
         { usuario_id: form.responsable, tipo_participante: "responsable" },
       ],
-      // No enviar saldo_a_abonar al PUT; se gestionará vía solicitud de abono
     };
 
     try {
-      const res = await fetch(`http://localhost:4000/api/proyectos/${proyecto._id}`, {
+      const res = await fetch(`${API}/api/proyectos/${proyecto._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
@@ -314,7 +310,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
       formData.append("archivo", file);
 
       try {
-        const res = await fetch(`http://localhost:4000/api/proyectos/${proyecto._id}/documentos`, {
+        const res = await fetch(`${API}/api/proyectos/${proyecto._id}/documentos`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: formData,
@@ -446,7 +442,7 @@ export default function ProyectoDetalles({ proyecto, modo = "page", onBack, onOp
                 const val = e.target.value;
                 if (onlyPositiveNumbers(val) || val === "") setForm({ ...form, saldo_a_abonar: val });
               }}
-              placeholder="Ej. 500"
+              placeholder=" "
             />
           </label>
 

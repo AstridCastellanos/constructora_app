@@ -1,4 +1,3 @@
-// src/components/Sidebar.jsx
 import React, { useEffect, useRef, useState, useContext } from "react";
 import {
   Folder, MessageSquare, CheckSquare, Settings, LogOut, Bell
@@ -9,8 +8,7 @@ import "../styles/Sidebar.css";
 import { AuthContext } from "../context/AuthContext";
 import NotificationsPopover from "./NotificationsPopover";
 import { getSocket, joinUserRoom } from "../utils/socketClient";
-
-const API = "http://localhost:4000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -55,23 +53,21 @@ export default function Sidebar() {
     }
   };
 
-  // Polling liviano (respaldo)
   useEffect(() => {
     if (!puedeVer("notificaciones")) return;
     loadCounts();
     const id = setInterval(loadCounts, 30000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario && usuario._id, roles.join(",")]);
 
-  // Escucha evento global para refrescar badge (lo dispara el popover)
+  // Escucha evento global para refrescar badge 
   useEffect(() => {
     const onRefresh = () => loadCounts();
     window.addEventListener("notifs:refresh", onRefresh);
     return () => window.removeEventListener("notifs:refresh", onRefresh);
   }, []);
 
-  // Socket en Sidebar para actualizar badge en tiempo real (sin desconectar)
+  // Socket en Sidebar para actualizar badge en tiempo real 
   useEffect(() => {
     if (!puedeVer("notificaciones")) return;
     if (!usuario) return;
@@ -82,17 +78,15 @@ export default function Sidebar() {
     const handleNew = () => loadCounts();
     s.on("notificaciones:nueva", handleNew);
 
-    // Limpieza: quitar listener (NO s.disconnect())
+    // Limpieza: quitar listener 
     return () => {
       s.off("notificaciones:nueva", handleNew);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario && (usuario._id || usuario.id), roles.join(",")]);
 
-  // Refrescar cuando cierres el popover (por si limpiaste todo)
+  // Refrescar cuando se cierre el popover 
   useEffect(() => {
     if (!openNotif) loadCounts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openNotif]);
 
   return (
@@ -130,7 +124,6 @@ export default function Sidebar() {
           </button>
         )}
 
-        {/* Notificaciones */}
         {puedeVer("notificaciones") && (
           <button
             ref={notifBtnRef}

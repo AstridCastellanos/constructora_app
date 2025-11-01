@@ -8,7 +8,7 @@ const ctrl = require("../controllers/proyectoDocumentosController");
 // Listar documentos del proyecto
 router.get("/proyectos/:id/documentos", auth, ctrl.listByProyecto);
 
-// Subir a Cloudinary + registrar en Mongo (usa memoryStorage de tu middleware)
+// Subir a Cloudinary y registrar en Mongo
 router.post(
   "/proyectos/:id/documentos",
   auth,

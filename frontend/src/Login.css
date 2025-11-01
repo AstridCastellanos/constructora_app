@@ -125,7 +125,7 @@ body {
   padding-right: 35px;
 }
 
-/* --- Versión de escritorio --- */
+/* Versión de escritorio */
 @media (min-width: 992px) {
   .login-container {
     display: block;

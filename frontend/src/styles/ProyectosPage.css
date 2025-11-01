@@ -161,22 +161,22 @@
 
 /* En Curso */
 .estado--enproceso {
-  background-color: #a2d5a2; /* Verde suave */
+  background-color: #a2d5a2; 
 }
 
 /* Finalizado */
 .estado--finalizado {
-  background-color: #90b4d8; /* Azul */
+  background-color: #90b4d8; 
 }
 
 /* Pausado */
 .estado--pausado {
-  background-color: #ccc; /* Gris claro */
+  background-color: #ccc; 
 }
 
 /* Cancelado */
 .estado--cancelado {
-  background-color: #a5a2a2; /* Gris oscuro, tu color solicitado */
+  background-color: #a5a2a2; 
 }
 
 
@@ -187,7 +187,7 @@
   gap: 8px;
 }
 
-/* Base del select (ya lo tenías) */
+/* Base del select */
 .estado-select {
   font-size: 12px;
   padding: 4px 6px;
@@ -198,7 +198,6 @@
 
 /* Modo icon-only: oculta el texto visible pero mantiene accesibilidad */
 .estado-select.icon-only {
-  /* Ocultar texto visible */
   color: transparent;
   text-shadow: 0 0 0 transparent;
   text-indent: 100%;
@@ -208,7 +207,7 @@
   /* Tamaño compacto */
   width: 28px;
   height: 28px;
-  padding: 0 22px 0 0; /* espacio para el ícono */
+  padding: 0 22px 0 0; 
 
   /* Quitar apariencia nativa y poner chevron */
   appearance: none;
@@ -234,7 +233,7 @@
 
 /* Asegurar que las opciones del menú se vean con texto normal */
 .estado-select.icon-only option {
-  color: #111; /* el desplegable sí muestra texto */
+  color: #111; 
 }
 
 

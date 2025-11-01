@@ -5,7 +5,6 @@ import { AuthContext } from "../context/AuthContext";
 export default function ProtectedRoute({ children, allowedRoles }) {
   const { usuario, roles, token } = useContext(AuthContext);
 
-  // Si no hay datos cargados aún, verifica el localStorage
   const tokenGuardado = token || localStorage.getItem("token");
 
   let rolesGuardados = roles || [];
@@ -23,17 +22,17 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" replace />;
   }
 
-  // 🔹 Validar roles
+  // Validar roles
   if (allowedRoles && !allowedRoles.some(r => rolesGuardados.includes(r))) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // 🔹 Bloquear clientes desde PC
+  // Bloquear clientes desde PC
   const isMobile = /Mobi|Android/i.test(navigator.userAgent);
   if (rolesGuardados.includes("cliente") && !isMobile) {
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ Autenticado y autorizado
+  // Autenticado y autorizado
   return children;
 }

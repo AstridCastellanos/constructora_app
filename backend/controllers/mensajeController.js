@@ -1,4 +1,3 @@
-// controllers/mensajeController.js
 const mongoose = require("mongoose");
 const Mensaje = require("../models/Mensaje");
 const cloudinary = require("../config/cloudinary.js").default;
@@ -24,29 +23,20 @@ function mapTipoToResourceType(tipo, publicId) {
 // POST /api/mensajes
 async function crearMensaje(req, res) {
   try {
-    console.log("[crearMensaje] HIT", {
-      bodyKeys: Object.keys(req.body || {}),
-      id_proyecto: req.body?.id_proyecto,
-      autor_id: req.body?.autor_id,
-    });
 
     const nuevoMensaje = new Mensaje(req.body);
     const guardado = await nuevoMensaje.save();
-
-    // Devuelve el mensaje con datos de autor como antes
+    
     const mensajeConAutor = await guardado.populate("autor_id", "nombres usuario_sistema");
 
-    // === Participantes del proyecto (incluye clientes) ===
     const participantes = await participantesProyecto(guardado.id_proyecto);
-    console.log("[crearMensaje] participantes (crudo):", participantes);
 
-    // Normaliza SIEMPRE el id del autor a string
+    // Normaliza el id del autor a string
     const autorIdStr = String(
       guardado?.autor_id?._id ??
       guardado?.autor_id ??
       ""
     );
-    console.log("[crearMensaje] autorIdStr(normalizado):", autorIdStr);
 
     // helper local para normalizar ids (doc, ObjectId o string)
     const normId = (v) => {
@@ -54,8 +44,8 @@ async function crearMensaje(req, res) {
         if (!v) return "";
         if (typeof v === "string") return v;
         if (v instanceof mongoose.Types.ObjectId) return v.toString();
-        if (v._id) return String(v._id); // doc poblado
-        return String(v);                // fallback
+        if (v._id) return String(v._id); 
+        return String(v);                
       } catch {
         return "";
       }
@@ -76,36 +66,29 @@ async function crearMensaje(req, res) {
         : "Mensaje con adjuntos";
     const preview = `${autorUser}: ${contenidoBase}`;
 
-    // De-dup + exclusión del autor, y solo ids normalizados
+    // Exclusión del autor y solo ids normalizados
     const vistos = new Set();
     const destinatarios = [];
 
     for (const uid of participantes || []) {
       const uidStr = normId(uid);
       const esAutor = uidStr && autorIdStr && uidStr === autorIdStr;
-      console.log("[crearMensaje] candidato:", uidStr, "| esAutor?", esAutor);
 
       if (!uidStr) continue;
-      if (esAutor) continue;            // EXCLUIR AUTOR SIEMPRE
-      if (vistos.has(uidStr)) continue; // evita duplicados
+      if (esAutor) continue;            
+      if (vistos.has(uidStr)) continue; 
       vistos.add(uidStr);
       destinatarios.push(uidStr);
     }
 
-    console.log("[crearMensaje] destinatarios (filtrados):", destinatarios);
 
     // NOTIFICAR (una sola vez)
     if (destinatarios.length) {
       await Promise.all(
         destinatarios.map((uidStr) => {
           if (uidStr === autorIdStr) {
-            console.warn("[crearMensaje] ⚠️ Autor colado, no se notifica:", uidStr);
             return null;
           }
-          console.log(
-            "[crearMensaje] crearNotificacion ->",
-            JSON.stringify({ uidStr, tipo: "chat_mensaje", titulo, preview })
-          );
           return crearNotificacion({
             id_usuario: uidStr,
             id_proyecto: guardado.id_proyecto,
@@ -119,7 +102,6 @@ async function crearMensaje(req, res) {
 
     return res.status(201).json(mensajeConAutor);
   } catch (error) {
-    console.error("Error al crear mensaje:", error);
     return res
       .status(400)
       .json({ mensaje: "Error al crear mensaje", error: error.message || error });
@@ -155,7 +137,6 @@ async function listarMensajes(req, res) {
 
     return res.json(mensajesFirmados);
   } catch (error) {
-    console.error("Error al obtener mensajes:", error.message);
     return res.status(500).json({ mensaje: "Error al obtener mensajes", detalle: error.message });
   }
 }
@@ -190,7 +171,6 @@ async function listarMensajesPorProyecto(req, res) {
 
     return res.json(mensajesFirmados);
   } catch (error) {
-    console.error("Error al obtener mensajes por proyecto:", error.message);
     return res.status(500).json({
       mensaje: "Error al obtener mensajes por proyecto",
       detalle: error.message,

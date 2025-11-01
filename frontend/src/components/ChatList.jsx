@@ -4,8 +4,7 @@ import "../styles/ChatList.css";
 import { AuthContext } from "../context/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { getSocket, joinUserRoom } from "../utils/socketClient";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function ChatList({ onSelect, selected }) {
   const [proyectos, setProyectos] = useState([]);
@@ -64,9 +63,9 @@ export default function ChatList({ onSelect, selected }) {
 
   // Limpiar notificaciones de chat para un proyecto
   const clearProjectChatNotifs = async (projectId) => {
-    // Optimista: baja a 0 de inmediato
+    
     setBadges((prev) => ({ ...prev, [projectId]: 0 }));
-    window.dispatchEvent(new Event("notifs:refresh")); // refresca badge global
+    window.dispatchEvent(new Event("notifs:refresh")); 
 
     try {
       const token = localStorage.getItem("token");
@@ -79,7 +78,6 @@ export default function ChatList({ onSelect, selected }) {
         body: JSON.stringify({ tipo: "chat_mensaje", id_proyecto: projectId }),
       });
       if (!res.ok) {
-        // Si falla, recargamos los badges reales para no quedar desincronizados
         await loadChatBadges();
       }
     } catch (err) {

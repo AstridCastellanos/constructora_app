@@ -11,14 +11,14 @@
   min-height: 0;
 }
 
-/* === HEADER DEL CHAT === */
+/* HEADER DEL CHAT */
 .cw-head {
   flex-shrink: 0;
   height: 72px;
   background: var(--white);
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 🔹 separa los extremos */
+  justify-content: space-between;
   padding: 0 24px;
   border-bottom: 1px solid #e5e7eb;
   gap: 14px;
@@ -37,7 +37,7 @@
   text-overflow: ellipsis;
 }
 
-/* BOTÓN DE REGRESO (⬅) */
+/* BOTÓN DE REGRESO */
 .cw-back {
   width: 34px;
   height: 34px;
@@ -60,7 +60,7 @@
   transform: scale(1.05);
 }
 
-/* BOTÓN DE DETALLES (📄) */
+/* BOTÓN DE DETALLES */
 .cw-details {
   width: 34px;
   height: 34px;
@@ -82,7 +82,7 @@
   transform: scale(1.05);
 }
 
-/* Tooltip elegante (opcional) */
+/* Tooltip elegante */
 .cw-details[title]:hover::after {
   content: attr(title);
   position: absolute;
@@ -99,7 +99,7 @@
   z-index: 99;
 }
 
-/* === CUERPO DEL CHAT === */
+/* CUERPO DEL CHAT */
 .cw-body {
   flex: 1;
   min-height: 0;
@@ -110,7 +110,7 @@
   gap: 22px;
 }
 
-/* === CAMPO DE MENSAJE (parte inferior) === */
+/* CAMPO DE MENSAJE (parte inferior) */
 .cw-input {
   flex-shrink: 0;
   border-top: none;
@@ -167,7 +167,7 @@
   flex-shrink: 0;
 }
 
-/* === MENSAJES === */
+/* MENSAJES */
 .bubble {
   background: var(--white);
   border-radius: var(--radius);
@@ -331,7 +331,7 @@
   transform: scale(1.05);
 }
 
-/* === BOTÓN DE BAJAR SCROLL === */
+/* BOTÓN DE BAJAR SCROLL */
 .cw-scroll-down {
   position: absolute;
   right: 20px;
@@ -451,7 +451,7 @@
   display: inline-flex;
 }
 
-/* Video preparado para futuro (si aceptas video en backend) */
+/* Video preparado para futuro */
 .b-video-wrapper {
   position: relative;
   border-radius: 10px;
@@ -470,6 +470,7 @@
   position: absolute;
   right: 8px;
   bottom: 8px;
+  height: 30px;
   background: rgba(255,255,255,0.9);
   border-radius: 8px;
   padding: 4px;

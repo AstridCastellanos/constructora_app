@@ -23,7 +23,7 @@
   font-size: 20px;
 }
 
-/* ===== FORMULARIO DE NUEVO PROYECTO ===== */
+/* FORMULARIO DE NUEVO PROYECTO */
 .form-proyecto {
   background: #fff;
   width: 100%;
@@ -117,7 +117,7 @@
 }
 
 
-/* === Documentos Adjuntos === */
+/* Documentos Adjuntos */
 .documentos-section {
   margin-top: 25px;
 }
@@ -189,7 +189,7 @@
   background: var(--blue-hover);
 }
 
-/* === Encabezado de Detalles de Proyecto === */
+/* Encabezado de Detalles de Proyecto */
 .detalles-header {
   display: flex;
   align-items: center;

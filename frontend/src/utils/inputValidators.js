@@ -9,7 +9,7 @@ export const lettersAndNumbers = (value) => /^[A-Za-z0-9ÁÉÍÓÚáéíóúÑñ
 
 // Letras, números y signos básicos permitidos (.,-_)
 export const lettersNumbersAndSigns = (value) =>
-  /^[A-Za-z0-9!@#$%^&*.,_\-]+$/.test(value);
+  /^[A-Za-z0-9 ¡!¿?#$%&()*+,\-./:;@[\\\]_{|}]+$/.test(value);
 
 // Solo letras sin acento y guion medio (sin espacios)
 export const onlyLettersAndUnderscore = (value) => /^[A-Za-z_]+$/.test(value);

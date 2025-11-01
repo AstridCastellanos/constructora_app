@@ -1,14 +1,11 @@
 const mongoose = require("mongoose");
 
-// Modelos
 const SolicitudAprobacion = require("../models/SolicitudAprobacion");
 const Abono = require("../models/Abono");
 const CounterAprobacion = require("../models/CounterAprobacion");
 const Proyecto = require("../models/Proyecto");
 
-// 🔔 Notificaciones (usar siempre el helper recomendado)
 const { crearNotificacion } = require("./notificacionController");
-// 👇 Helper para obtener titulares activos (lo estabas usando pero no estaba importado)
 const { titularesActivosIds } = require("./_notif.helpers");
 
 // Helpers de autenticación y roles
@@ -36,7 +33,6 @@ async function siguienteCodigoSolicitud() {
   return `S-${num}`;
 }
 
-// ===================== Crear =====================
 exports.crear = async (req, res) => {
   try {
     const usuario = getUsuario(req);
@@ -79,7 +75,7 @@ exports.crear = async (req, res) => {
       historial: [{ accion: "CREADA", por: usuarioId, en: new Date(), nota: "" }]
     });
 
-    // 🔔 Notificar SOLO a titulares
+    // Notificar solo  a titulares
     const titulares = await titularesActivosIds();
     await Promise.all(titulares.map(uid => crearNotificacion({
       id_usuario: uid,
@@ -91,12 +87,10 @@ exports.crear = async (req, res) => {
 
     res.status(201).json(doc);
   } catch (err) {
-    console.error("crear solicitud error:", err);
     res.status(500).json({ mensaje: "Error al crear solicitud" });
   }
 };
 
-// ===================== Listar =====================
 exports.listar = async (req, res) => {
   try {
     const usuario = getUsuario(req);
@@ -104,7 +98,7 @@ exports.listar = async (req, res) => {
     if (!usuarioId) return res.status(401).json({ mensaje: "No autenticado" });
 
     const filtro = {};
-    // Titular ve todas; otros solo las suyas
+    // Titular ve todas, otros solo las suyas
     if (!esTitular(usuario)) filtro.solicitanteId = usuarioId;
 
     const { estado, tipo, proyectoId, q } = req.query;
@@ -121,12 +115,10 @@ exports.listar = async (req, res) => {
 
     res.json(items);
   } catch (err) {
-    console.error("listar solicitudes error:", err);
     res.status(500).json({ mensaje: "Error al listar solicitudes" });
   }
 };
 
-// =============== Listar "mías" ===================
 exports.listarMias = async (req, res) => {
   try {
     const usuario = getUsuario(req);
@@ -140,12 +132,10 @@ exports.listarMias = async (req, res) => {
 
     res.json(items);
   } catch (err) {
-    console.error("listar mías error:", err);
     res.status(500).json({ mensaje: "Error al listar mis solicitudes" });
   }
 };
 
-// ==================== Obtener una =================
 exports.obtenerUna = async (req, res) => {
   try {
     const usuario = getUsuario(req);
@@ -165,12 +155,10 @@ exports.obtenerUna = async (req, res) => {
 
     res.json(s);
   } catch (err) {
-    console.error("obtener solicitud error:", err);
     res.status(500).json({ mensaje: "Error al obtener solicitud" });
   }
 };
 
-// ==================== Aprobar =====================
 exports.aprobar = async (req, res) => {
   const session = await mongoose.startSession();
   try {
@@ -186,7 +174,6 @@ exports.aprobar = async (req, res) => {
       if (!s) { respuestaEnviada = true; return res.status(404).json({ mensaje: "No encontrado" }); }
       if (s.estado !== "PENDIENTE") { respuestaEnviada = true; return res.status(409).json({ mensaje: "La solicitud ya no está pendiente" }); }
 
-      // Permitir autoaprobación (marcaremos el comentario más abajo)
       const esAuto = String(s.solicitanteId) === String(usuarioId);
 
       const proyecto = await Proyecto.findById(s.proyectoId).session(session);
@@ -232,7 +219,6 @@ exports.aprobar = async (req, res) => {
         );
       }
 
-      // ---- marcado de autoaprobación en el comentario ----
       s.estado = "APROBADA";
       s.decididaPorId = usuarioId;
       s.decididaEn = new Date();
@@ -247,7 +233,7 @@ exports.aprobar = async (req, res) => {
         nota: s.comentarioDecision
       });
 
-      // 🔔 Notificar SOLO al solicitante (helper unificado)
+      // Notificar solo al solicitante 
       await crearNotificacion({
         id_usuario: String(s.solicitanteId),
         id_proyecto: s.proyectoId,
@@ -270,14 +256,12 @@ exports.aprobar = async (req, res) => {
       return res.json({ ok: true });
     }
   } catch (err) {
-    console.error("aprobar solicitud error:", err);
     if (!res.headersSent) res.status(500).json({ mensaje: "Error al aprobar solicitud" });
   } finally {
     session.endSession();
   }
 };
 
-// ==================== Rechazar ===================
 exports.rechazar = async (req, res) => {
   try {
     const usuario = getUsuario(req);
@@ -298,7 +282,7 @@ exports.rechazar = async (req, res) => {
     s.historial.push({ accion: "RECHAZADA", por: usuarioId, en: new Date(), nota: s.comentarioDecision });
     await s.save();
 
-    // 🔔 Notificar SOLO al solicitante (helper unificado)
+    // Notificar SOLO al solicitante
     await crearNotificacion({
       id_usuario: String(s.solicitanteId),
       id_proyecto: s.proyectoId,
@@ -309,12 +293,10 @@ exports.rechazar = async (req, res) => {
 
     res.json(s);
   } catch (err) {
-    console.error("rechazar solicitud error:", err);
     res.status(500).json({ mensaje: "Error al rechazar solicitud" });
   }
 };
 
-// ==================== Cancelar ===================
 exports.cancelar = async (req, res) => {
   try {
     const usuario = getUsuario(req);
@@ -334,7 +316,6 @@ exports.cancelar = async (req, res) => {
 
     res.json(s);
   } catch (err) {
-    console.error("cancelar solicitud error:", err);
     res.status(500).json({ mensaje: "Error al cancelar solicitud" });
   }
 };
@@ -352,7 +333,6 @@ exports.bloqueoProyecto = async (req, res) => {
     if (!s) return res.json({ bloqueado: false });
     return res.json({ bloqueado: true, solicitud: s });
   } catch (err) {
-    console.error("bloqueoProyecto error:", err);
     return res.status(500).json({ mensaje: "Error al consultar bloqueo" });
   }
 };

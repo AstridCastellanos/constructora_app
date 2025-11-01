@@ -32,12 +32,11 @@ async function listByProyecto(req, res) {
 
     return res.json(docsFirmados);
   } catch (e) {
-    console.error("Error listando documentos:", e);
     return res.status(500).json({ mensaje: "Error al obtener documentos" });
   }
 }
 
-// POST /api/proyectos/:id/documentos  (FormData: archivo)
+// POST /api/proyectos/:id/documentos  
 async function uploadDocumento(req, res) {
   try {
     const file = req.file;
@@ -67,7 +66,6 @@ async function uploadDocumento(req, res) {
 
     return res.status(201).json(doc);
   } catch (e) {
-    console.error("Error al subir documento:", e);
     return res.status(500).json({ mensaje: "Error al subir archivo" });
   }
 }
@@ -85,7 +83,6 @@ async function deleteDocumento(req, res) {
 
     return res.json({ mensaje: "Documento eliminado" });
   } catch (e) {
-    console.error("Error al eliminar documento:", e);
     return res.status(500).json({ mensaje: "Error al eliminar documento" });
   }
 }

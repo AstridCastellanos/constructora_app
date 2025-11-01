@@ -7,7 +7,9 @@ import {
   onlyLetters,
   onlyNumbers,
   onlyLettersAndUnderscore,
+  lettersNumbersAndSigns, 
 } from "../utils/inputValidators";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function UsuariosPage() {
   const [form, setForm] = useState({
@@ -58,7 +60,7 @@ const handleBuscar = async () => {
 
   try {
     const res = await fetch(
-      `http://localhost:4000/api/usuarios/${form.usuario_sistema}`
+      `${API}/api/usuarios/${form.usuario_sistema}`
     );
     const data = await res.json();
 
@@ -112,7 +114,7 @@ const handleBuscar = async () => {
   const handleGuardar = async () => {
     try {
       const checkRes = await fetch(
-        `http://localhost:4000/api/usuarios/${form.usuario_sistema}`
+        `${API}/api/usuarios/${form.usuario_sistema}`
       );
       const exists = checkRes.ok;
 
@@ -214,8 +216,8 @@ const handleBuscar = async () => {
 
           const method = exists ? "PUT" : "POST";
           const url = exists
-            ? `http://localhost:4000/api/usuarios/${form.usuario_sistema}`
-            : "http://localhost:4000/api/usuarios";
+            ? `${API}/api/usuarios/${form.usuario_sistema}`
+            : `${API}/api/usuarios`;
 
           const res = await fetch(url, {
             method,
@@ -278,7 +280,7 @@ const handleBuscar = async () => {
         cerrarModal();
         try {
           const res = await fetch(
-            `http://localhost:4000/api/usuarios/${form.usuario_sistema}`,
+            `${API}/api/usuarios/${form.usuario_sistema}`,
             { method: "DELETE" }
           );
           const data = await res.json();
@@ -423,7 +425,7 @@ const handleBuscar = async () => {
                 if (onlyNumbers(e.target.value) || e.target.value === "")
                   handleChange(e);
               }}
-              placeholder="Ej. 555111222"
+              placeholder=" "
               minLength={8}
               maxLength={20}
               required
@@ -435,7 +437,12 @@ const handleBuscar = async () => {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 value={form.password}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "" || lettersNumbersAndSigns(val)) {
+                    handleChange(e);
+                  }
+                }}
                 placeholder="Mínimo 10 caracteres"
                 minLength={10}
                 maxLength={40}
@@ -474,7 +481,6 @@ const handleBuscar = async () => {
         </div>
       </section>
 
-      {/* Modal de mensajes global */}
       <ModalMensaje {...modal} />
     </div>
   );

@@ -6,6 +6,7 @@ import "../styles/ProyectosPage.css";
 import "../styles/SolicitudesPage.css"; 
 import { AuthContext } from "../context/AuthContext";
 import ModalMensaje from "../components/ModalMensaje";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function SolicitudesPage() {
   const { usuario } = useContext(AuthContext);
@@ -31,7 +32,7 @@ export default function SolicitudesPage() {
     if (filtroTipo) qs.append("tipo", filtroTipo);
 
     try {
-      const res = await fetch(`http://localhost:4000/api/solicitudes?${qs.toString()}`, {
+      const res = await fetch(`${API}/api/solicitudes?${qs.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -49,7 +50,7 @@ export default function SolicitudesPage() {
   const aprobar = async (id) => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:4000/api/solicitudes/${id}/aprobar`, {
+      const res = await fetch(`${API}/api/solicitudes/${id}/aprobar`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ comentario: "" }),
@@ -73,7 +74,7 @@ export default function SolicitudesPage() {
   const confirmarRechazo = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:4000/api/solicitudes/${rejectId}/rechazar`, {
+      const res = await fetch(`${API}/api/solicitudes/${rejectId}/rechazar`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ comentario: rejectReason }),
@@ -95,7 +96,7 @@ export default function SolicitudesPage() {
     const token = localStorage.getItem("token");
     if (!window.confirm("¿Cancelar esta solicitud?")) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/solicitudes/${id}/cancelar`, {
+      const res = await fetch(`${API}/api/solicitudes/${id}/cancelar`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -106,7 +107,7 @@ export default function SolicitudesPage() {
     }
   };
 
-  // Búsqueda simple por código, proyecto, solicitante o aprobador
+  // Búsqueda simple
   const solicitudesFiltradas = solicitudes.filter((s) => {
     const term = filtro.trim().toLowerCase();
     if (!term) return true;
@@ -163,7 +164,6 @@ const handleExport = async () => {
   await exportToXlsx(rows, {
     sheetName: "Solicitudes",
     filePrefix: "Solicitudes", 
-    // headers: ["Código","Proyecto","Tipo","Resumen","Solicitante","Aprobador","Fecha","Estado"], // opcional
   });
 };
 
@@ -214,7 +214,6 @@ const handleExport = async () => {
               <th>Código</th>
               <th>Proyecto</th>
 
-              {/* Encabezado TIPO con select icon-only (reutiliza .estado-select) */}
               <th>
                 <div className="th-estado">
                   <span>Tipo</span>
@@ -237,7 +236,6 @@ const handleExport = async () => {
               <th>Aprobador</th>
               <th>Fecha</th>
 
-              {/* Encabezado ESTADO con select icon-only */}
               <th>
                 <div className="th-estado">
                   <span>Estado</span>

@@ -5,6 +5,7 @@ import { exportToXlsx } from "../utils/excelExport";
 import "../styles/ProyectosPage.css";
 import { lettersNumbersAndHyphen } from "../utils/inputValidators";
 import { useNavigate } from "react-router-dom";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function ProyectosPage() {
   const [proyectos, setProyectos] = useState([]);
@@ -14,7 +15,7 @@ export default function ProyectosPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch("http://localhost:4000/api/proyectos", {
+    fetch(`${API}/api/proyectos`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -46,7 +47,7 @@ export default function ProyectosPage() {
     console.log("Buscando:", filtro);
   };
 
-  // Exportar a Excel (usa util compartido)
+  // Exportar a Excel 
 const handleExport = async () => {
   const rows = proyectosFiltrados.map((p) => {
     const cliente = p.participantes?.find(
@@ -76,7 +77,6 @@ const handleExport = async () => {
   await exportToXlsx(rows, {
     sheetName: "Proyectos",
     filePrefix: "Proyectos",
-    // headers: ["No. Proyecto","Proyecto","Cliente","Responsable","Fecha Inicio","Estado"], 
   });
 };
 
@@ -113,7 +113,6 @@ const handleExport = async () => {
               <span>Nuevo</span>
             </button>
 
-            {/* ← NUEVO: botón Exportar a la par de “Nuevo” */}
             <button
               className="btn-export"
               onClick={handleExport}

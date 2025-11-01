@@ -6,7 +6,7 @@ const cors = require("cors");
 const mongoSanitize = require("express-mongo-sanitize");
 require("dotenv").config();
 
-// holder de io para usarlo en helpers/controladores
+// Holder de io para usarlo en helpers/controladores
 const { setIO } = require("./utils/io");
 
 // Importar rutas
@@ -14,7 +14,6 @@ const usuarioRoutes = require("./routes/usuarioRoutes");
 const proyectoRoutes = require("./routes/proyectoRoutes");
 const mensajeRoutes = require("./routes/mensajeRoutes");
 const notificacionRoutes = require("./routes/notificacionRoutes");
-const cambioProyectoRoutes = require("./routes/cambioProyectoRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const protegidaRoutes = require("./routes/protegidaRoutes");
 const proyectoDocumentosRoutes = require("./routes/proyectoDocumentosRoutes");
@@ -31,7 +30,6 @@ app.use((req, res, next) => {
     if (req.params) req.params = mongoSanitize.sanitize(req.params);
     next();
   } catch (e) {
-    console.error("Error sanitizando request:", e);
     next(e);
   }
 });
@@ -48,42 +46,35 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] },
 });
 
-// registra io global y conserva el set en app (por compatibilidad)
+// Registra io global y conserva el set en app 
 setIO(io);
 app.set("io", io);
 
 // Rutas
-app.use("/api/usuarios", usuarioRoutes);     // login público aquí
-app.use("/api/protegida", protegidaRoutes);  // para probar token
-app.use("/api/proyectos", proyectoRoutes);   // incluye también /:id/documentos
+app.use("/api/usuarios", usuarioRoutes);     
+app.use("/api/protegida", protegidaRoutes);  
+app.use("/api/proyectos", proyectoRoutes);   
 app.use("/api/mensajes", mensajeRoutes);
 app.use("/api/notificaciones", notificacionRoutes);
-app.use("/api/cambios", cambioProyectoRoutes);
 app.use("/api/archivos", uploadRoutes);
 app.use("/api", proyectoDocumentosRoutes);
 app.use("/api/solicitudes", solicitudesRoutes);
 
 // Socket.IO
 io.on("connection", (socket) => {
-  console.log("🟢 Cliente conectado:", socket.id);
 
-  // join por usuario para notificaciones dirigidas
+  // Join por usuario para notificaciones dirigidas
   socket.on("notifications:join", ({ userId }) => {
     if (userId) {
       socket.join(`user:${userId}`);
-      // opcional: console.log(`Socket ${socket.id} joined room user:${userId}`);
     }
   });
 
-  // Chat (sin cambios): sigue emitiendo a todos
   socket.on("nuevo-mensaje", (msg) => {
     io.emit("mensaje-actualizado", msg);
   });
 
-  socket.on("disconnect", () => {
-    console.log("🔴 Cliente desconectado:", socket.id);
-  });
 });
 
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => console.log(`🚀 Servidor corriendo en puerto ${PORT}`));
+server.listen(PORT, () => console.log(`Servidor corriendo en puerto ${PORT}`));

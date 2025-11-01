@@ -1,13 +1,13 @@
 /* Fondo oscuro bloqueante */
 .modal-overlay {
   position: fixed;
-  inset: 0;                 /* equivale a top/right/bottom/left: 0 */
-  z-index: 10000;           /* por encima de casi todo, incluido el sidebar */
+  inset: 0;                 
+  z-index: 10000;           
   background-color: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px;            /* margen para pantallas pequeñas */
+  padding: 16px;            
 }
 
 /* Caja del mensaje */

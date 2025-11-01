@@ -1,4 +1,4 @@
-/* --- Filtros (ya tenías) --- */
+/* Filtros */
 .filters {
   display: flex;
   align-items: center;
@@ -19,7 +19,7 @@
   gap: 8px;
 }
 
-/* Base del select sin bordes (como en tu ProyectosPage.css modificado) */
+/* Base del select sin bordes */
 .estado-select {
   font-size: 12px;
   padding: 4px 6px;
@@ -59,7 +59,7 @@
 /* Encabezado Acciones a la derecha */
 .th-actions { text-align: right; }
 
-/* --- Badges de estado --- */
+/* Badges de estado */
 .badge {
   padding: 6px 10px;
   border-radius: 999px;
@@ -92,11 +92,11 @@
 .btn-reject  { border-color: #fee2e2; }
 .btn-cancel  { border-color: #e5e7eb; }
 
-/* Colores de iconos (quitamos inline styles) */
+/* Colores de iconos  */
 .icon-approve { color: #16a34a; }
 .icon-reject  { color: #dc2626; }
 
-/* --- Celdas estado vacío / loading --- */
+/* Celdas estado vacío / loading */
 .loading-cell {
   text-align: left;
   padding: 20px;
@@ -106,7 +106,7 @@
   padding: 20px;
 }
 
-/* --- Modal rechazo: quitamos estilos inline del JSX --- */
+/* Modal rechazo */
 .modal-reject {
   display: grid;
   gap: 8px;
@@ -126,22 +126,22 @@
 /* Hover/focus states */
 .btn-approve:hover,
 .btn-approve:focus-visible {
-  background: #ecfdf5;          /* verde muy suave */
-  border-color: #86efac;        /* borde verdoso sutil */
+  background: #ecfdf5;          
+  border-color: #86efac;        
 }
 .btn-approve:hover .icon-approve,
 .btn-approve:focus-visible .icon-approve {
-  color: #15803d;               /* verde un poquito más oscuro */
+  color: #15803d;               
 }
 
 .btn-reject:hover,
 .btn-reject:focus-visible {
-  background: #fef2f2;          /* rojo muy suave */
-  border-color: #fecaca;        /* borde rojizo sutil */
+  background: #fef2f2;         
+  border-color: #fecaca;        
 }
 .btn-reject:hover .icon-reject,
 .btn-reject:focus-visible .icon-reject {
-  color: #b91c1c;               /* rojo un poquito más oscuro */
+  color: #b91c1c;               
 }
 
 /* Activo (click) con micro-feedback */
@@ -155,7 +155,7 @@
   outline-offset: 2px;
 }
 
-/* Estado deshabilitado (por si lo usas luego) */
+/* Estado deshabilitado  */
 .btn:disabled {
   opacity: .5;
   cursor: not-allowed;

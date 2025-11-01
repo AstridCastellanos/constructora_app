@@ -6,7 +6,7 @@ async function getProyectos(req, res) {
   try {
     const { scope } = req.query;
 
-    // Si no es para la vista de chat, responde todo como antes
+    // Si no es para la vista de chat, responde todo como normal
     if (scope !== "chat") {
       const proyectos = await Proyecto.find()
         .populate("participantes.usuario_id", "nombres email estado");
@@ -14,7 +14,7 @@ async function getProyectos(req, res) {
     }
 
     // Filtrado para la vista de chat
-    const usuario = req.usuario; // viene del JWT por authmiddleware
+    const usuario = req.usuario; 
     const roles = Array.isArray(usuario.roles) ? usuario.roles : [];
     const esTitular = roles.includes("titular");
     const esColaborador = roles.includes("colaborador");
@@ -42,7 +42,6 @@ async function getProyectos(req, res) {
 
     return res.json(proyectos);
   } catch (error) {
-    console.error("Error al obtener proyectos:", error);
     res.status(500).json({ mensaje: "Error al obtener proyectos" });
   }
 }
@@ -56,7 +55,6 @@ async function createProyecto(req, res) {
       .populate("participantes.usuario_id", "nombres email estado");
     res.status(201).json(proyectoCompleto);
   } catch (error) {
-    console.error("Error al crear proyecto:", error);
     res.status(400).json({ mensaje: "Error al crear proyecto", error });
   }
 }
@@ -71,15 +69,14 @@ async function getProyectoById(req, res) {
     }
     res.json(proyecto);
   } catch (error) {
-    console.error("Error al obtener proyecto:", error);
     res.status(500).json({ mensaje: "Error al obtener proyecto" });
   }
 }
 
-// Actualizar proyecto por ID (con incremento atómico de saldo_abonado)
+// Actualizar proyecto por ID 
 async function updateProyecto(req, res) {
   try {
-    // 1) Cargar proyecto actual y validar estado de cierre/bloqueo
+    // Cargar proyecto actual y validar estado de cierre/bloqueo
     const actual = await Proyecto.findById(req.params.id);
     if (!actual) {
       return res.status(404).json({ mensaje: "Proyecto no encontrado" });
@@ -101,17 +98,16 @@ async function updateProyecto(req, res) {
       return res.status(423).json({ mensaje: `Edición bloqueada por solicitud ${solPend.codigo || solPend._id}.` });
     }
 
-    // 2) Procesar payload de actualización (sin abonos aquí)
+    // Procesar payload de actualización 
     const {
       descripcion,
       direccion,
       presupuesto_aprox,
       estado,
       participantes,
-      saldo_a_abonar, // si llega, lo rechazamos: los abonos ahora van por solicitudes
+      saldo_a_abonar, 
     } = req.body;
 
-    // Si te llega un "saldo_a_abonar" (>0), rechazar para evitar inconsistencias
     if (saldo_a_abonar !== undefined && saldo_a_abonar !== null) {
       const monto = Number(saldo_a_abonar);
       if (Number.isFinite(monto) && monto > 0) {
@@ -123,8 +119,6 @@ async function updateProyecto(req, res) {
     if (typeof descripcion === "string") setUpdate.descripcion = descripcion.trim();
     if (typeof direccion === "string") setUpdate.direccion = direccion.trim();
 
-    // Permitimos actualizar "estado", pero si el front intenta enviar "Finalizado/Cancelado"
-    // no llegará aquí porque ya bloqueamos por solicitud pendiente. Aun así, se conserva.
     if (estado) setUpdate.estado = estado;
 
     if (presupuesto_aprox !== undefined && presupuesto_aprox !== null) {
@@ -163,7 +157,6 @@ async function updateProyecto(req, res) {
       saldo_abonado: proyectoActualizado.saldo_abonado,
     });
   } catch (error) {
-    console.error("Error al actualizar proyecto:", error);
     return res.status(500).json({ mensaje: "Error al actualizar proyecto" });
   }
 }
@@ -178,7 +171,6 @@ async function listDocumentos(req, res) {
     const docs = Array.isArray(proyecto.documentos) ? proyecto.documentos : [];
     return res.json(docs);
   } catch (err) {
-    console.error("Error listando documentos:", err);
     return res.status(500).json({ mensaje: "Error al listar documentos" });
   }
 }
@@ -189,8 +181,6 @@ async function uploadDocumento(req, res, next) {
     if (!req.file) {
       return res.status(400).json({ mensaje: "No se envió archivo." });
     }
-
-    // Aquí deberías subir a tu storage (Cloudinary/S3/etc.) y obtener metadatos.
     // Simulación de resultado:
     const { originalname, mimetype, size } = req.file;
     const nuevoDoc = {

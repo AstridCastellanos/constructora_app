@@ -1,4 +1,3 @@
-// controllers/_notif.helpers.js
 const Proyecto = require("../models/Proyecto");
 const Usuario = require("../models/Usuario");
 
@@ -11,7 +10,7 @@ async function participantesProyecto(proyectoId) {
   return (p.participantes || []).map(x => String(x.usuario_id));
 }
 
-// Solo IDs de clientes del proyecto (por si los necesitas aparte)
+// Solo IDs de clientes del proyecto 
 async function clientesProyecto(proyectoId) {
   const p = await Proyecto.findById(proyectoId)
     .select("participantes.usuario_id participantes.tipo_participante")
@@ -22,7 +21,7 @@ async function clientesProyecto(proyectoId) {
     .map(x => String(x.usuario_id));
 }
 
-// Todos los usuarios Titular activos (rol del sistema, no por proyecto)
+// Todos los usuarios Titular activos 
 async function titularesActivosIds() {
   const us = await Usuario.find({ estado: "activo", roles: { $in: ["titular"] } })
     .select("_id")

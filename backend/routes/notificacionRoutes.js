@@ -1,4 +1,3 @@
-// routes/notificacionRoutes.js
 const express = require("express");
 const {
   listarNotificaciones,
@@ -19,10 +18,10 @@ router.get("/", listarNotificaciones);
 // Contadores para el badge
 router.get("/counts", contarNotificaciones);
 
-// Marcar UNA como leída (y eliminar)
+// Marcar una como leída y eliminar
 router.patch("/:id/read", marcarLeidaYEliminar);
 
-// Marcar TODAS como leídas (y eliminar)
+// Marcar todas como leídas y eliminar
 router.patch("/read-all", marcarTodasLeidasYEliminar);
 
 module.exports = router;

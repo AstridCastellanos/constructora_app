@@ -89,10 +89,10 @@
   line-height: 16px;
   text-align: center;
   color: #fff;
-  background: #ef4444; /* rojo por defecto */
+  background: #ef4444; 
   pointer-events: none;
 }
-.sb-badge--red { background: #ef4444; }  /* notificaciones */
+.sb-badge--red { background: #ef4444; }  
 
 /* Popover */
 .sb-popover {
@@ -113,7 +113,7 @@
   padding: 10px 12px;
   font-weight: 600;
   border-bottom: 1px solid #f1f5f9;
-  height: 48px; /* Altura fija del header */
+  height: 48px; 
 }
 
 /* Botón de cierre */
@@ -134,9 +134,9 @@
 
 /* Cuerpo con scroll interno */
 .sb-popover__body {
-  overflow-y: auto; /* Scroll solo vertical */
-  flex: 1;          /* Toma el espacio restante */
-  padding: 8px;     /* Espaciado interno */
+  overflow-y: auto; 
+  flex: 1;          
+  padding: 8px;     
 }
 
 /* Lista y elementos de la lista */
@@ -185,7 +185,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  height: 44px; /* Altura fija del footer */
+  height: 44px; 
 }
 
 /* Botón limpiar todo */

@@ -1,23 +1,18 @@
-// routes/proyectoRoutes.js
 const express = require("express");
 const router = express.Router();
-
-// Usa el nombre real del archivo:
 const auth = require("../middlewares/authMiddleware");
 const { upload, handleMulterError } = require("../middlewares/upload");
-
 const proyectoCtrl = require("../controllers/proyectoController");
 const docCtrl = require("../controllers/proyectoDocumentosController");
 
 // Proyectos
-// Proteger este GET porque getProyectos usa req.usuario cuando ?scope=chat
 router.get("/", auth, proyectoCtrl.getProyectos);
 
-router.post("/", auth, proyectoCtrl.createProyecto);     // opcional proteger
-router.get("/:id", auth, proyectoCtrl.getProyectoById);  // opcional proteger
-router.put("/:id", auth, proyectoCtrl.updateProyecto);   // opcional proteger
+router.post("/", auth, proyectoCtrl.createProyecto);     
+router.get("/:id", auth, proyectoCtrl.getProyectoById);  
+router.put("/:id", auth, proyectoCtrl.updateProyecto);   
 
-// Documentos (protegidas)
+// Documentos
 router.get("/:id/documentos", auth, docCtrl.listByProyecto);
 router.post(
   "/:id/documentos",

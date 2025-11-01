@@ -12,6 +12,7 @@ import ProyectoDetalles from "./ProyectoDetalles";
 import "../styles/ChatWindow.css";
 import { io } from "socket.io-client";
 import { useIsMobile } from "../hooks/useIsMobile"; 
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function ChatWindow({ project, onBack }) {
   const [mensajes, setMensajes] = useState([]);
@@ -61,17 +62,16 @@ export default function ChatWindow({ project, onBack }) {
     const el = chatBodyRef.current;
     if (!el) return;
 
-    const top = el.scrollHeight; // valor definitivo del fondo
+    const top = el.scrollHeight; 
     if (instant) {
       el.scrollTop = top;                 
     } else {
-      el.scrollTo({ top, behavior: "smooth" }); // smooth para acciones del usuario
+      el.scrollTo({ top, behavior: "smooth" }); 
     }
   };
 
-  // al montar el componente, baja al final después de que el DOM haya calculado alturas
+  // Al montar el componente, baja al final después de que el DOM haya calculado alturas
   useEffect(() => {
-    // Dos requestAnimationFrame garantizan que se haya pintado y medido el layout
     requestAnimationFrame(() => {
       requestAnimationFrame(() => scrollToBottom({ instant: true }));
     });
@@ -85,12 +85,11 @@ export default function ChatWindow({ project, onBack }) {
       });
     }, [mensajes, isAtBottom]);
 
-  // Nuevo: volver a bajar cuando cargan imágenes/adjuntos que modifican la altura del contenedor
+  // Volver a bajar cuando cargan imágenes/adjuntos que modifican la altura del contenedor
   useEffect(() => {
     const el = chatBodyRef.current;
     if (!el) return;
 
-    // Si ya estabas al fondo, baja de nuevo tras la pintura
     if (isAtBottom) {
       requestAnimationFrame(() => scrollToBottom({ instant: true }));
     }
@@ -120,7 +119,7 @@ export default function ChatWindow({ project, onBack }) {
     };
   }, [mensajes, isAtBottom]);
 
-  // Nuevo: mantener el scroll al fondo si cambia el tamaño del contenedor (por CSS o cambios de layout)
+  // Mantener el scroll al fondo si cambia el tamaño del contenedor
   useEffect(() => {
     if (!chatBodyRef.current) return;
     const el = chatBodyRef.current;
@@ -140,7 +139,7 @@ export default function ChatWindow({ project, onBack }) {
       .catch((err) => console.error("Error al obtener mensajes:", err));
   }, [project]);
 
-  // Cuando regresamos desde detalles a la vista de chat, forzar scroll al final
+  // forzar scroll al final cuando regresamos desde detalles a la vista de chat
   useEffect(() => {
     if (!mostrarDetalles) {
       requestAnimationFrame(() => {
@@ -184,7 +183,7 @@ export default function ChatWindow({ project, onBack }) {
           data.tipo.includes("officedocument")
         )
           tipoArchivo = "docx";
-        else if (data.tipo.includes("video")) tipoArchivo = "video"; // permitir video
+        else if (data.tipo.includes("video")) tipoArchivo = "video"; 
 
         archivosSubidos.push({
           url: data.url,
@@ -238,7 +237,7 @@ export default function ChatWindow({ project, onBack }) {
     );
   }
 
-  // --- Helpers para el link de descarga/visualización con el resource_type correcto
+  // Helpers para el link de descarga/visualización con el resource_type correcto
   const rtFromTipo = (tipo) => {
     if (!tipo) return "raw";
     if (tipo === "imagen" || String(tipo).includes("image")) return "image";
@@ -257,7 +256,7 @@ export default function ChatWindow({ project, onBack }) {
     const msgId = String(
       msg?.autor_id?._id ??
       msg?.autor_id?.id ??
-      msg?.autor_id // por si el backend manda el id directo
+      msg?.autor_id 
     );
 
     const userId = String(user?._id ?? user?.id ?? "");
@@ -265,7 +264,6 @@ export default function ChatWindow({ project, onBack }) {
     const msgUser = (msg?.autor_id?.usuario_sistema || "").toLowerCase();
     const userUser = (user?.usuario_sistema || "").toLowerCase();
 
-    // compara por id si existe, si no, por usuario_sistema normalizado
     return (!!msgId && !!userId && msgId === userId) ||
           (!!msgUser && !!userUser && msgUser === userUser);
   };
@@ -351,7 +349,6 @@ export default function ChatWindow({ project, onBack }) {
                         );
                       }
 
-                      // Nuevo: soporte de video
                       if (tipo === "video" || tipo?.includes("video")) {
                         return (
                           <div key={i} className="b-video-wrapper">
@@ -377,22 +374,12 @@ export default function ChatWindow({ project, onBack }) {
                         <div
                           key={i}
                           className="b-file-icon"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                          }}
+                          
                         >
                           <a
                             href={buildDownloadHref(file.public_id, tipo, false)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{
-                              color: "#007bff",
-                              textDecoration: "none",
-                              fontWeight: "500",
-                              cursor: "pointer",
-                            }}
                           >
                             {file.nombre}
                           </a>
@@ -400,7 +387,6 @@ export default function ChatWindow({ project, onBack }) {
                             href={buildDownloadHref(file.public_id, tipo, true)}
                             title="Descargar archivo"
                             rel="noopener noreferrer"
-                            style={{ color: "#555" }}
                           >
                             <Download size={18} />
                           </a>
@@ -464,7 +450,7 @@ export default function ChatWindow({ project, onBack }) {
             id="fileInput"
             type="file"
             style={{ display: "none" }}
-            // Aceptar los formatos que ya tienes en backend + video
+            // Aceptar los formatos que ya se tienen en Backend
             accept="
               image/jpeg,image/png,image/gif,image/webp,image/svg+xml,
               application/pdf,

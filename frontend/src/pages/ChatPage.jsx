@@ -6,6 +6,8 @@ import ChatWindow from "../components/ChatWindow";
 import EmptyChat from "../components/EmptyChat";
 import { useIsMobile } from "../hooks/useIsMobile";
 import "../styles/ChatPage.css";
+const API = import.meta.env.VITE_API_BASE_URL;
+
 
 export default function ChatPage() {
   const [selectedProject, setSelectedProject] = useState(null);
@@ -13,12 +15,12 @@ export default function ChatPage() {
   const isMobile = useIsMobile();
   const location = useLocation();
 
-  // Detectar si venimos desde ProyectoDetalles (por estado)
+  // Detectar si venimos desde ProyectoDetalles
   useEffect(() => {
     const projectId = location.state?.projectId;
     if (projectId) {
       setLoadingProject(true);
-      fetch(`http://localhost:4000/api/proyectos/${projectId}`)
+      fetch(`${API}/api/proyectos/${projectId}`)
         .then((res) => res.json())
         .then((data) => {
           setSelectedProject(data);

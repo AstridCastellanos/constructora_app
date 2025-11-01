@@ -5,7 +5,7 @@ const auth = require("../middlewares/authMiddleware");
 // Ruta protegida de prueba
 router.get("/perfil", auth, (req, res) => {
   res.json({
-    mensaje: "✅ Acceso autorizado",
+    mensaje: "Acceso autorizado",
     usuario: req.usuario
   });
 });

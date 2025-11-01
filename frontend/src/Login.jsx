@@ -9,6 +9,7 @@ import {
   lettersNumbersAndSigns,
 } from "./utils/inputValidators";
 import "./Login.css";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function Login() {
     setCargando(true);
 
     try {
-      const res = await fetch("http://localhost:4000/api/usuarios/login", {
+      const res = await fetch(`${API}/api/usuarios/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identificador: usuario, password }),
@@ -112,7 +113,7 @@ export default function Login() {
                   }
                 }}
                 minLength={10}
-                maxLength={40} // ← 🔹 límite directo
+                maxLength={40} 
               />
               <span
                 className="password-toggle"

@@ -18,7 +18,7 @@ function guessTipoFromFormato(formato) {
   return "otros";
 }
 
-// GET /^/archivo/(.+)$/
+
 async function descargarOAbrirArchivo(req, res) {
   try {
     const public_id = decodeURIComponent(req.params[0] || "");
@@ -101,7 +101,6 @@ async function descargarOAbrirArchivo(req, res) {
 
     return res.send(fileRes.data);
   } catch (error) {
-    console.error("Error al procesar archivo:", error.message);
     return res.status(500).json({ error: "Error al procesar archivo" });
   }
 }

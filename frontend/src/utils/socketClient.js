@@ -1,7 +1,6 @@
-// src/utils/socketClient.js
 import { io } from "socket.io-client";
 
-const API = "http://localhost:4000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 let socket = null;
 
@@ -14,19 +13,11 @@ export function getSocket() {
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
     });
-
-    socket.on("connect", () => {
-      // console.debug("[socket] connected:", socket.id);
-    });
-
-    socket.on("disconnect", (reason) => {
-      // console.debug("[socket] disconnected:", reason);
-    });
   }
   return socket;
 }
 
-/** Une el socket al room del usuario (idempotente). */
+// Une el socket al room del usuario
 export function joinUserRoom(user) {
   const s = getSocket();
   const userId = user?._id || user?.id;

@@ -1,4 +1,3 @@
-// uploadcontroller.js
 const { v2: cloudinary } = require("cloudinary");
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
@@ -10,7 +9,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// (opcional) límites y filtro de MIME como en tu middleware/upload.js
+// Límites y filtro de MIME como en middleware/upload.js
 const limits = { fileSize: 100 * 1024 * 1024 }; // 100 MB
 const MIME_PERMITIDOS = new Set([
   "image/jpeg","image/png","image/gif","image/webp",
@@ -43,14 +42,13 @@ const storage = new CloudinaryStorage({
 
     // public_id sin extensión para evitar casos .ext.ext
     const baseName = (file.originalname || "")
-      .replace(/\.[^/.]+$/, "")  // quita extensión
+      .replace(/\.[^/.]+$/, "") 
       .replace(/\s+/g, "_");
 
     return {
       folder: "constructora_adjuntos",
-      resource_type, // <- clave para video
+      resource_type, 
       public_id: `${Date.now()}-${baseName}`,
-      // Si quisieras forzar formato/transformaciones, agregar aquí options específicas
     };
   },
 });
@@ -64,15 +62,12 @@ const uploadFile = async (req, res) => {
     // CloudinaryStorage expone path/filename/size/mimetype
     return res.json({
       url: req.file.path,
-      public_id: req.file.filename,     // <- guarda ESTE id
+      public_id: req.file.filename,     
       nombre: req.file.originalname,
-      tipo: req.file.mimetype,          // tu front ya infiere “video” con esto
+      tipo: req.file.mimetype,          
       tamaño: req.file.size,
-      // (opcional) agrega resource_type si lo necesitas
-      // resource_type: req.file.resource_type, // según versión puede no venir
     });
   } catch (error) {
-    console.error("Error al subir archivo:", error);
     return res.status(500).json({ error: "Error al subir archivo" });
   }
 };

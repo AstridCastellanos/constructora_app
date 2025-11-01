@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { X, Trash2 } from "lucide-react";
 import { getSocket, joinUserRoom } from "../utils/socketClient";
-
-const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export default function NotificationsPopover({ open, onClose, anchorRef, usuario }) {
   const [items, setItems] = useState([]);

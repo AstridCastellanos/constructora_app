@@ -6,13 +6,13 @@ export default function ModalMensaje({
   visible,
   titulo = "Aviso",
   mensaje = "",
-  tipo = "info", // info | success | error | warning
+  tipo = "info", 
   onAceptar,
   onCancelar,
   textoAceptar = "Aceptar",
   textoCancelar = "Cancelar",
   mostrarCancelar = false,
-  children, // <<--- NUEVO
+  children, 
 }) {
   if (!visible) return null;
 
@@ -30,7 +30,7 @@ export default function ModalMensaje({
       <div className={`modal-contenedor ${tipo}`}>
         <h3 className="modal-titulo">{titulo}</h3>
 
-        {/* Si hay children, úsalos; si no, muestra el mensaje normal */}
+        {/* Se usa children si hay, si no muestra el mensaje normal */}
         {children ? (
           <div className="modal-contenido">{children}</div>
         ) : (

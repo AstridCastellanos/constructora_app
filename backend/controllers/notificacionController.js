@@ -1,4 +1,3 @@
-// controllers/notificacionController.js
 const mongoose = require("mongoose");
 const Notificacion = require("../models/Notificacion");
 const { getIO } = require("../utils/io");
@@ -8,7 +7,7 @@ const { getIO } = require("../utils/io");
  * @param {Object} params
  * @param {String|mongoose.Types.ObjectId} params.id_usuario
  * @param {String|mongoose.Types.ObjectId} [params.id_proyecto]
- * @param {String} params.tipo - 'chat_mensaje' | 'aprobacion_solicitada' | 'aprobacion_resuelta' | ...
+ * @param {String} params.tipo 
  * @param {String} params.titulo
  * @param {String} params.mensaje
  */
@@ -24,7 +23,7 @@ async function crearNotificacion({ id_usuario, id_proyecto, tipo, titulo, mensaj
 
   const doc = await notif.save();
 
-  // Emitir en tiempo real (no romper si falla)
+  // Emitir en tiempo real 
   try {
     const io = getIO();
     if (io) {
@@ -33,7 +32,6 @@ async function crearNotificacion({ id_usuario, id_proyecto, tipo, titulo, mensaj
         ping: true,
         tipo: doc.tipo,
       });
-      // console.log(`[notifs] emit => ${userRoom} tipo=${doc.tipo}`);
     }
   } catch (e) {
     console.warn("No se pudo emitir notificación en tiempo real:", e?.message || e);
@@ -44,8 +42,7 @@ async function crearNotificacion({ id_usuario, id_proyecto, tipo, titulo, mensaj
 
 /**
  * GET /api/notificaciones
- * Lista notificaciones del usuario autenticado (ordenadas desc por fecha).
- * Query: ?tipo=...&limit=20
+ * Lista notificaciones del usuario autenticado.
  */
 async function listarNotificaciones(req, res) {
   try {
@@ -58,22 +55,19 @@ async function listarNotificaciones(req, res) {
     const filtro = { id_usuario: userId };
     if (tipo) filtro.tipo = tipo;
 
-    // console.log("[notifs] listar -> user:", String(userId), "filtro:", filtro, "limit:", lim);
-
     const items = await Notificacion.find(filtro)
       .sort({ fecha_creacion: -1 })
       .limit(lim);
 
     return res.json(items);
   } catch (e) {
-    console.error("Error al listar notificaciones:", e);
     return res.status(500).json({ mensaje: "Error al listar notificaciones" });
   }
 }
 
 /**
  * GET /api/notificaciones/counts
- * Devuelve contadores para badge { total, chat, aprobaciones }
+ * Devuelve contadores para badge
  */
 async function contarNotificaciones(req, res) {
   try {
@@ -87,11 +81,9 @@ async function contarNotificaciones(req, res) {
     ]);
 
     const total = chat + solCreadas + solRes;
-    // console.log("[notifs] counts ->", { total, chat, aprobaciones: solCreadas + solRes });
 
     return res.json({ total, chat, aprobaciones: solCreadas + solRes });
   } catch (e) {
-    console.error("Error al contar notificaciones:", e);
     return res.status(500).json({ mensaje: "Error al contar notificaciones" });
   }
 }
@@ -111,15 +103,13 @@ async function marcarLeidaYEliminar(req, res) {
     if (!eliminado) return res.status(404).json({ mensaje: "Notificación no encontrada" });
     return res.json({ ok: true });
   } catch (e) {
-    console.error("Error al eliminar notificación:", e);
     return res.status(500).json({ mensaje: "Error al eliminar notificación" });
   }
 }
 
 /**
  * PATCH /api/notificaciones/read-all
- * "Leer" = eliminar todas (o por tipo) del usuario
- * Body opcional: { tipo: "chat_mensaje" | "aprobacion_solicitada" | ... }
+ * "Leer" = eliminar todas del usuario
  */
 async function marcarTodasLeidasYEliminar(req, res) {
   try {
@@ -134,7 +124,6 @@ async function marcarTodasLeidasYEliminar(req, res) {
     const r = await Notificacion.deleteMany(filtro);
     return res.json({ ok: true, deletedCount: r?.deletedCount || 0 });
   } catch (e) {
-    console.error("Error al eliminar notificaciones:", e);
     return res.status(500).json({ mensaje: "Error al eliminar notificaciones" });
   }
 }

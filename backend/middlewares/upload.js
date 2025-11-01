@@ -1,7 +1,7 @@
 const multer = require("multer");
 
 const storage = multer.memoryStorage();
-const limits = { fileSize: 100 * 1024 * 1024 };// 20 MB
+const limits = { fileSize: 100 * 1024 * 1024 };
 
 const MIME_PERMITIDOS = new Set([
   "image/jpeg", "image/png", "image/gif", "image/webp",

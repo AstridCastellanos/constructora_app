@@ -5,7 +5,7 @@ const archivoSchema = new mongoose.Schema({
   url: { type: String, required: true },
   tipo: {
     type: String,
-    enum: ["imagen", "pdf", "docx", "otros", "video"], // <-- agrega 'video'
+    enum: ["imagen", "pdf", "docx", "otros", "video"], 
     default: "otros",
   },
   nombre: { type: String },
@@ -34,7 +34,7 @@ const mensajeSchema = new mongoose.Schema({
   archivos: [archivoSchema],
 });
 
-// 🚨 Validación: impedir mensajes totalmente vacíos
+// Validación: impedir mensajes totalmente vacíos
 mensajeSchema.pre("validate", function (next) {
   if (!this.contenido?.trim() && (!this.archivos || this.archivos.length === 0)) {
     return next(new Error("El mensaje no puede estar vacío"));

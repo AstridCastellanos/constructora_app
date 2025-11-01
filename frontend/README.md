@@ -14,3 +14,11 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+---
+
+## Notas de seguridad
+
+- La librería **xlsx** presenta una vulnerabilidad conocida sin fix oficial (Prototype Pollution / ReDoS).
+- En este proyecto se usa **solo para exportar datos a Excel** desde el frontend (no se procesan archivos cargados por usuarios).
+- Por lo tanto, el riesgo es **muy bajo** y se mantendrá hasta que el proveedor publique una versión corregida.

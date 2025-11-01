@@ -1,4 +1,3 @@
-// utils/io.js
 let io = null;
 
 function setIO(instance) {

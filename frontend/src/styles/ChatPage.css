@@ -6,7 +6,7 @@
   color: var(--text);
 }
 
-/* --- VISTA DE ESCRITORIO --- */
+/* VISTA DE ESCRITORIO */
 .list-col {
   background: #fff;
   padding: 18px 16px;
@@ -21,11 +21,11 @@
   min-height: 0;
 }
 
-/* --- VISTA MÓVIL --- */
+/* VISTA MÓVIL */
 .layout-mobile {
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* ✅ altura dinámica, corrige el salto con teclado */
+  height: 100dvh; 
   background: var(--bg);
   overflow: hidden;
 }
