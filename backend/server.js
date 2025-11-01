@@ -22,7 +22,14 @@ const solicitudesRoutes = require("./routes/solicitudesRoutes");
 const app = express();
 
 // Middlewares globales
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://constructora-app-tawny.vercel.app", // dominio frontend
+    "http://localhost:5173" // para pruebas locales
+  ],
+  credentials: true
+}));
+
 app.use(express.json({ limit: "20mb" }));
 app.use((req, res, next) => {
   try {
