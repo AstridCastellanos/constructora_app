@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Mensaje = require("../models/Mensaje");
-const cloudinary = require("../config/cloudinary.js").default;
+const cloudinary = require("../config/cloudinary.js");
 
 // Helpers de notificaciones
 const { crearNotificacion } = require("./notificacionController");
