@@ -220,6 +220,10 @@
   line-height: 1.45;
   color: var(--text-dark);
   margin-top: 6px;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .b-time {

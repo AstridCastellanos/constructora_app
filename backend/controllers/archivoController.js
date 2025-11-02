@@ -1,7 +1,7 @@
 const axios = require("axios");
 const Mensaje = require("../models/Mensaje");
 const ProyectoDocumento = require("../models/ProyectoDocumento");
-const cloudinary = require("../config/cloudinary.js").default;
+const cloudinary = require("../config/cloudinary.js");
 
 function tipoToResourceType(tipo) {
   if (tipo === "imagen") return "image";
