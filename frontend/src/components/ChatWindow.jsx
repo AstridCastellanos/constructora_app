@@ -31,9 +31,9 @@ export default function ChatWindow({ project, onBack }) {
 
   // Conexión WebSocket
   useEffect(() => {
-    socket.current = io("http://localhost:4000");
+    socket.current = io(`${API}`, { transports: ["websocket"] });
     return () => socket.current.disconnect();
-  }, []);
+  }, [API]);
 
   // Escuchar mensajes del proyecto actual
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function ChatWindow({ project, onBack }) {
   // Cargar mensajes del proyecto
   useEffect(() => {
     if (!project?._id) return;
-    fetch(`http://localhost:4000/api/mensajes/proyecto/${project._id}`)
+    fetch(`${API}/api/mensajes/proyecto/${project._id}`)
       .then((res) => res.json())
       .then((data) => setMensajes(data))
       .catch((err) => console.error("Error al obtener mensajes:", err));
@@ -169,7 +169,7 @@ export default function ChatWindow({ project, onBack }) {
         const formData = new FormData();
         formData.append("archivo", file);
 
-        const res = await fetch("http://localhost:4000/api/archivos/upload", {
+        const res = await fetch(`${API}/api/archivos/upload`, {
           method: "POST",
           body: formData,
         });
@@ -201,7 +201,7 @@ export default function ChatWindow({ project, onBack }) {
         archivos: archivosSubidos,
       };
 
-      const resMensaje = await fetch("http://localhost:4000/api/mensajes", {
+      const resMensaje = await fetch(`${API}/api/mensajes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -247,7 +247,7 @@ export default function ChatWindow({ project, onBack }) {
 
   const buildDownloadHref = (publicId, tipo, download = true) => {
     const rt = rtFromTipo(tipo);
-    const base = `http://localhost:4000/api/mensajes/archivo/${encodeURIComponent(publicId)}`;
+    const base = `${API}/api/mensajes/archivo/${encodeURIComponent(publicId)}`;
     const qs = `rt=${rt}${download ? "&download=true" : ""}`;
     return `${base}?${qs}`;
   };

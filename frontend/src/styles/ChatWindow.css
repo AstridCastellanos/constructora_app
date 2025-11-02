@@ -478,3 +478,40 @@
   color: #334155;
   border: 1px solid #e2e8f0;
 }
+
+/* MOBILE KEYBOARD PUSH */
+@media (max-width: 768px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .cw {
+    height: 100dvh; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cw-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px; 
+  }
+
+  .cw-head {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .cw-input {
+    position: sticky;
+    bottom: 0;
+    background: var(--white);
+    z-index: 10;
+  }
+}
